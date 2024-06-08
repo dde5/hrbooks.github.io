@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <title>Hyread 電子書45館查詢</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="libraries.js"></script>
+  <script src="findAndSearch.js"></script>
+</head>
+
+<body>
+  <div class="header">
+    <h1>Hyread 電子書45館查詢-</h1>
+    <!-- 這是一個超連結標籤，用來建立一個超連結，目標為新的連結瀏覽分頁，網址為指定的網址，內容為指定的文字 -->
+    <a href="https://book.tpml.edu.tw/newArrivals?newbookDate=202312&filterField=FEA&filterValue=EH" target="_blank">
+    <!-- 這是一個標題標籤，用來設定超連結的標題，等級為 4 -->
+    <h5>臺北市立圖書館-電子書新書通報</h5>
+    </a>
+    <!-- 將 container 放在 input 的上方 -->
+    <div id="container">
+      <label for="select-all">
+        <input type="checkbox" id="select-all" name="select-all" value="all">
+        全選
+      </label>
+      <br>
+      <!-- 這裡會動態生成 45 個 checkbox -->
+    </div>
+    <script src="libCookies.js"></script>
+  </div>
+  <input type="text" id="book-name" placeholder="請輸入查找書名">
+  <button id="search-button">搜尋</button>
+  </div>
+  <div id="results"></div>
+  <div id="findbook"></div>
+</body>
+
+</html>

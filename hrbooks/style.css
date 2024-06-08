@@ -1,0 +1,66 @@
+body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #results {
+    grid-column: 1;
+    background-color: lightblue;
+    border: 1px solid black;
+    padding: 10px;
+  }
+
+  #findbook {
+    grid-column: 2;
+    background-color: lightgreen;
+    border: 1px solid black;
+    padding: 10px;
+  }
+
+  div.header {
+    grid-column: 1 / 3;
+    background-color: lightyellow;
+    border: 1px solid black;
+    padding: 10px;
+  }
+
+  /* 新增 container 的樣式 */
+  #container {
+    /* 設定 display 為 flex */
+    display: flex;
+    /* 設定 flex-direction 為 column，讓子元素垂直排列 */
+    flex-direction: column;
+    /* 設定 flex-wrap 為 wrap，讓子元素在空間不足時換行 */
+    flex-wrap: wrap;
+    /* 其他屬性不變 */
+    width: 80%;
+    height: 50vh;
+    background-color: lightgray;
+    border: 1px solid black;
+    padding: 10px;
+    margin: 0;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    /* 新增 overflow-y: auto; */
+    overflow-y: auto;
+  }
+
+
+  /* 選擇 id 為 select-all 的元素 */
+  #select-all {
+    /* 設定外距為 2px */
+    margin: 2px;
+    /* 設定字體大小為 12px */
+    font-size: 12px;
+  }
+
+  /* 選擇 name 為 url 的元素，即所有的 checkbox */
+  [name="url"] {
+    /* 設定外距為 2px */
+    margin: 2px;
+    /* 設定 flex-basis 為 25%，讓每行有四個子元素 */
+    flex-basis: 25%;
+    /* 設定字體大小為 12px */
+    font-size: 12px;
+  }
