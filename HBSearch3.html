@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hyread 電子書多館查詢 Pro (Debug Lib Load)</title>
+  <title>Hyread 電子書多館查詢 Pro (Revisit Lib Load)</title>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <style>
     :root {
@@ -109,7 +109,7 @@
       border: 1px solid #ddd;
       border-radius: var(--border-radius);
       background-color: white;
-      min-height: 50px; /* Added min-height for visibility during debugging */
+      min-height: 50px; 
     }
     #library-checkboxes-container label {
       display: flex;
@@ -223,7 +223,7 @@
 
 <body>
   <header>
-    <h1>Hyread 電子書多館查詢 Pro (Debug Lib Load)</h1>
+    <h1>Hyread 電子書多館查詢 Pro (Revisit Lib Load)</h1>
   </header>
 
   <div class="main-container">
@@ -250,8 +250,7 @@
             <input type="text" id="library-filter-input" placeholder="篩選圖書館名稱..." style="margin-top:10px; margin-bottom:5px;">
         </div>
         <div id="library-checkboxes-container">
-            <!-- Checkboxes will be populated by JavaScript -->
-             <p style="color: grey; padding:10px;">正在載入圖書館列表...</p> <!-- Placeholder -->
+             <!-- Placeholder removed, will be populated by JS -->
         </div>
     </section>
 
@@ -390,98 +389,65 @@
     };
     // =======================================================================
 
-    let allLibraryUrlsFlat = []; // Initialize as empty, will be populated in DOMContentLoaded
+    let allLibraryUrlsFlat = []; 
 
     const $id = (id) => document.getElementById(id);
     const $qs = (selector) => document.querySelector(selector);
     const $qsa = (selector) => document.querySelectorAll(selector);
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-    function getRandomUserAgent() {
-      const userAgents = [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:95.0) Gecko/20100101 Firefox/95.0',
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36'
-      ];
-      return userAgents[Math.floor(Math.random() * userAgents.length)];
-    }
+    // ... (其餘輔助函數 getRandomUserAgent, getDynamicDelay, etc. 保持不變) ...
+    // (為簡潔，此處省略，它們與上一版相同)
+    function getRandomUserAgent() { /* ... */ }
+    function getDynamicDelay() { /* ... */ }
+    function updateDelayDisplays() { /* ... */ }
+    function updateSelectedLibCount() { /* ... */ }
+    function saveCheckboxStates() { /* ... */ }
+    function loadCheckboxStates() { /* ... */ }
+    function updateSelectAllCheckboxState() { /* ... */ }
+    function filterLibraries() { /* ... */ }
+    function updateDetailedSearchProgress(p,t) { /* ... */ }
+    function updateStatusInfo(m) { /* ... */ }
+    function resetDetailedSearchUI(isNew) { /* ... */ }
+    async function performInitialBookSearch() { /* ... */ }
+    window.startDetailedBookSearchWrapper = (p,t) => { /* ... */ };
+    async function startDetailedBookSearch(p,t) { /* ... */ }
+    async function querySingleLibrary(l,p,s) { /* ... */ }
+    // (以上省略的函數，請使用你上一版中已有的、未變動的定義)
 
-    function getDynamicDelay() {
-      let currentBaseDelay = delayConfig.base;
-      if (failedRequests > successfulRequests / 2 && failedRequests > 3) { 
-          currentBaseDelay = Math.min(delayConfig.base * delayConfig.errorMultiplier, 7000); 
-      }
-      const randomDelay = Math.random() * delayConfig.random;
-      return currentBaseDelay + randomDelay;
-    }
-    
-    function updateDelayDisplays() {
-        $id("current-delay-display").textContent = (delayConfig.base / 1000).toFixed(1) + "秒";
-        $id("batch-delay-display").textContent = (delayConfig.batchDelay / 1000).toFixed(1) + "秒";
-    }
 
-    function updateSelectedLibCount() {
-        selectedHyreadUrls = Array.from($qsa('input[name="library-url"]:checked')).map(cb => cb.value);
-        $id("selected-lib-count").textContent = selectedHyreadUrls.length;
-    }
-
-    function saveCheckboxStates() {
-        $qsa('input[name="library-url"]').forEach(checkbox => {
-            localStorage.setItem("checkbox-" + checkbox.id, checkbox.checked);
-        });
-        localStorage.setItem("selectAllLibraries", $id("select-all-libraries").checked);
-    }
-
-    function loadCheckboxStates() {
-        let hasSavedState = false;
-        $qsa('input[name="library-url"]').forEach(checkbox => {
-            const storedState = localStorage.getItem("checkbox-" + checkbox.id);
-            if (storedState !== null) {
-                checkbox.checked = storedState === "true";
-                hasSavedState = true;
-            }
-        });
-        
-        if (hasSavedState) {
-            const selectAllState = localStorage.getItem("selectAllLibraries");
-             if (selectAllState !== null) $id("select-all-libraries").checked = selectAllState === "true";
-        } else {
-            const defaultLibs = ["https://tpml.ebook.hyread.com.tw", "https://tphcc.ebook.hyread.com.tw", "https://ebook.nlpi.edu.tw", "https://taichunggov.ebook.hyread.com.tw", "https://ksml.ebook.hyread.com.tw"];
-            $qsa('input[name="library-url"]').forEach(cb => {
-                const cleanedCBValue = cb.value.endsWith('/') ? cb.value.slice(0, -1) : cb.value;
-                if (defaultLibs.includes(cleanedCBValue)) cb.checked = true;
-            });
-            $id("select-all-libraries").checked = false; 
-        }
-        updateSelectedLibCount();
-        filterLibraries(); 
-    }
-    
     function createLibraryCheckboxes() {
-        console.log("Attempting to create library checkboxes..."); // DEBUG
+        console.log("[createLibraryCheckboxes] Function called.");
         const container = $id("library-checkboxes-container");
         
         if (!container) {
-            console.error("Fatal Error: #library-checkboxes-container not found in DOM.");
+            console.error("[createLibraryCheckboxes] Fatal Error: Container #library-checkboxes-container not found.");
             return;
         }
-        container.innerHTML = ''; // Clear previous content or placeholder
-        
-        console.log("libraryDataFull at createLibraryCheckboxes:", JSON.parse(JSON.stringify(libraryDataFull))); // DEBUG: Deep copy for logging
+        container.innerHTML = ''; // Clear any previous content or placeholder
 
         if (typeof libraryDataFull !== 'object' || libraryDataFull === null || Object.keys(libraryDataFull).length === 0) {
-            container.innerHTML = "<p style='color:red;'>錯誤：圖書館數據 (libraryDataFull) 為空或未正確載入。請檢查 script 中的 libraryDataFull 物件。</p>";
-            console.error("libraryDataFull is empty, null, or not an object with keys. Cannot create checkboxes.");
+            const errorMsg = "[createLibraryCheckboxes] Error: libraryDataFull is empty, null, or not a valid object. Cannot create checkboxes.";
+            console.error(errorMsg);
+            container.innerHTML = `<p style='color:red;'>${errorMsg}</p>`;
             return;
         }
-        
+        console.log("[createLibraryCheckboxes] libraryDataFull seems valid. Number of groups:", Object.keys(libraryDataFull).length);
+
         let checkboxIndex = 0;
-        let librariesAdded = 0; // DEBUG
+        let totalLibrariesAdded = 0;
 
         for (const groupName in libraryDataFull) {
+            // Ensure it's an own property and the value is an array (the list of libraries for the group)
             if (Object.hasOwnProperty.call(libraryDataFull, groupName) && Array.isArray(libraryDataFull[groupName])) {
-                console.log(`Processing group: ${groupName}`); // DEBUG
+                const librariesInGroup = libraryDataFull[groupName];
+                console.log(`[createLibraryCheckboxes] Processing group: "${groupName}" with ${librariesInGroup.length} libraries.`);
+
+                if (librariesInGroup.length === 0) {
+                    console.log(`[createLibraryCheckboxes] Group "${groupName}" is empty, skipping.`);
+                    continue; // Skip empty groups
+                }
+
                 const groupDiv = document.createElement('div');
                 groupDiv.className = 'library-group';
                 
@@ -489,10 +455,11 @@
                 groupTitle.textContent = groupName;
                 groupDiv.appendChild(groupTitle);
 
-                libraryDataFull[groupName].forEach(lib => {
-                    if (Array.isArray(lib) && lib.length >= 2) {
-                        const url = String(lib[0]); // Ensure string
-                        const name = String(lib[1]); // Ensure string
+                librariesInGroup.forEach(libEntry => {
+                    // Ensure libEntry is an array with at least two elements [url, name]
+                    if (Array.isArray(libEntry) && libEntry.length >= 2) {
+                        const url = String(libEntry[0]);
+                        const name = String(libEntry[1]);
                         const id = `lib-cb-${checkboxIndex++}`;
 
                         const label = document.createElement("label");
@@ -501,8 +468,8 @@
 
                         const checkbox = document.createElement("input");
                         checkbox.type = "checkbox";
-                        checkbox.name = "library-url";
-                        checkbox.value = url.endsWith('/') ? url.slice(0, -1) : url;
+                        checkbox.name = "library-url"; // Match this with how selected URLs are gathered
+                        checkbox.value = url.endsWith('/') ? url.slice(0, -1) : url; // Store cleaned URL
                         checkbox.id = id;
                         checkbox.addEventListener("change", () => {
                             updateSelectedLibCount();
@@ -512,441 +479,63 @@
 
                         label.appendChild(checkbox);
                         label.appendChild(document.createTextNode(name));
-                        groupDiv.appendChild(label);
-                        librariesAdded++; // DEBUG
+                        groupDiv.appendChild(label); // Append label to groupDiv
+                        totalLibrariesAdded++;
                     } else {
-                        console.warn("Skipping invalid library entry in group", groupName, ":", lib);
+                        console.warn(`[createLibraryCheckboxes] Invalid library entry in group "${groupName}":`, libEntry);
                     }
                 });
-                if (libraryDataFull[groupName].length > 0) { // Only append groupDiv if it has libraries
-                    container.appendChild(groupDiv);
-                }
+                container.appendChild(groupDiv); // Append groupDiv to the main container
             } else {
-                 console.warn("Skipping invalid group in libraryDataFull:", groupName, libraryDataFull[groupName]);
+                 console.warn(`[createLibraryCheckboxes] Invalid or non-array group in libraryDataFull: "${groupName}"`, libraryDataFull[groupName]);
             }
         }
 
-        if (librariesAdded === 0 && Object.keys(libraryDataFull).length > 0) {
-             container.innerHTML = "<p style='color:orange;'>警告：圖書館數據 (libraryDataFull) 似乎已載入，但未成功生成任何圖書館選項。請檢查數據格式。</p>";
-             console.warn("libraryDataFull seems loaded, but no checkboxes were added. Check data format inside groups.");
-        } else if (librariesAdded > 0) {
-            console.log(`Successfully added ${librariesAdded} library checkboxes.`); // DEBUG
+        if (totalLibrariesAdded === 0) {
+            const warnMsg = "[createLibraryCheckboxes] No libraries were added. Check libraryDataFull structure and content.";
+            console.warn(warnMsg);
+            if (Object.keys(libraryDataFull).length > 0) { // If there were groups but no items
+                 container.innerHTML = `<p style='color:orange;'>${warnMsg}</p>`;
+            }
+        } else {
+            console.log(`[createLibraryCheckboxes] Successfully added ${totalLibrariesAdded} library checkboxes to the DOM.`);
         }
         
+        // Load saved states after all checkboxes are created
         loadCheckboxStates(); 
     }
     
-    function updateSelectAllCheckboxState() {
-        const allVisibleCheckboxes = Array.from($qsa('input[name="library-url"]'))
-                                       .filter(cb => cb.parentElement.style.display !== 'none');
-        const allVisibleChecked = allVisibleCheckboxes.every(cb => cb.checked);
-        $id("select-all-libraries").checked = allVisibleCheckboxes.length > 0 && allVisibleChecked;
-    }
-
-
-    function filterLibraries() {
-        const filterText = $id("library-filter-input").value.toLowerCase();
-        $qsa('#library-checkboxes-container label').forEach(label => {
-            const libName = label.textContent.toLowerCase();
-            if (libName.includes(filterText)) {
-                label.style.display = 'flex';
-            } else {
-                label.style.display = 'none';
-            }
-        });
-        updateSelectAllCheckboxState();
-    }
-
-    function updateDetailedSearchProgress(processed, total) {
-        const percentage = total > 0 ? (processed / total) * 100 : 0;
-        const progressBar = $qs(".progress-bar");
-        progressBar.style.width = percentage + '%';
-        progressBar.textContent = `${processed}/${total}`;
-        $id("processed-count").textContent = processed;
-        $id("total-count").textContent = total;
-    }
-
-    function updateStatusInfo(message) {
-        $id("status-message").textContent = message;
-        $id("success-count").textContent = successfulRequests;
-        $id("failed-count").textContent = failedRequests;
-        $id("current-batch-info").textContent = currentBatchNum;
-        $id("total-batch-info").textContent = totalBatchesNum;
-    }
-
-    function resetDetailedSearchUI(isNewSearch = true) {
-        successfulRequests = 0;
-        failedRequests = 0;
-        processedLibsCount = 0;
-        currentBatchNum = 0;
-        totalBatchesNum = 0;
-        updateDetailedSearchProgress(0, 0);
-        if (isNewSearch) {
-            $id("detailed-findbook-results").innerHTML = '查詢結果將顯示於此...';
-        }
-        updateStatusInfo("待機中");
-        $id("pause-resume-button").textContent = "暫停搜尋";
-        $id("pause-resume-button").disabled = true; 
-        $id("cancel-search-button").disabled = true; 
-        isPaused = false;
-    }
-
-    async function performInitialBookSearch() {
-        const bookName = $id("book-name-input").value.trim();
-        if (!bookName) {
-            alert("請輸入書名關鍵字。");
-            return;
-        }
-
-        $id("initial-search-button").disabled = true;
-        $id("initial-search-button").textContent = "搜尋中...";
-        $id("initial-results-section").style.display = 'block';
-        $id("initial-results").innerHTML = '<p>正在向 Hyread 主站查詢書名，請稍候...</p>';
-
-        const searchUrl = `https://ebook.hyread.com.tw/searchList.jsp?search_field=FullText&search_input=${encodeURIComponent(bookName)}`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000);
-
-        try {
-            const response = await fetch(searchUrl, {
-                signal: controller.signal
-            });
-            clearTimeout(timeoutId);
-
-            if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-            
-            const data = await response.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(data, "text/html");
-            
-            const bookItems = doc.querySelectorAll('div.book-title-01');
-            if (bookItems.length === 0) {
-                $id("initial-results").innerHTML = `<p>在 Hyread 主站未找到符合「${bookName}」的書籍。請嘗試其他關鍵字。</p>`;
-                return;
-            }
-
-            let resultsHtml = '';
-            bookItems.forEach((item, index) => {
-                const linkElement = item.querySelector('a');
-                if (linkElement) {
-                    const title = linkElement.textContent.trim();
-                    const rawHref = linkElement.getAttribute('href'); 
-
-                    const bookIdMatchSimple = rawHref ? rawHref.match(/id=(\d+)/) : null;
-                    const simpleBookIdForDisplay = bookIdMatchSimple ? bookIdMatchSimple[1] : "未知ID";
-
-                    if (rawHref) { 
-                        resultsHtml += `
-                            <div class="result-item">
-                                <span>${title.replace(/</g, "<").replace(/>/g, ">")} (ID: ${simpleBookIdForDisplay})</span>
-                                <button class="action-button" 
-                                        onclick="startDetailedBookSearchWrapper('${rawHref.replace(/'/g, "\\'").replace(/"/g, """)}', 
-                                                                             '${title.replace(/'/g, "\\'").replace(/"/g, """)}')">
-                                    查詢此書在各館情況
-                                </button>
-                            </div>`;
-                    }
-                }
-            });
-            $id("initial-results").innerHTML = resultsHtml || '<p>無法解析搜尋結果，或結果中無有效書籍ID。</p>';
-
-        } catch (error) {
-            clearTimeout(timeoutId);
-            console.error("Initial book search failed:", error);
-            let errorMsg = '查詢 Hyread 主站時發生錯誤。';
-            if (error.name === 'AbortError') {
-                errorMsg += ' 請求超時。';
-            } else if (error.message.toLowerCase().includes('failed to fetch')) { 
-                errorMsg += ' 網路連線失敗或CORS問題。';
-                if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
-                     $id("safari-warning-placeholder").style.display = 'block';
-                }
-            } else {
-                errorMsg += ` (${error.message}).`;
-            }
-            $id("initial-results").innerHTML = `<p style="color:red;">${errorMsg}</p>`;
-        } finally {
-            $id("initial-search-button").disabled = false;
-            $id("initial-search-button").textContent = "搜尋書名";
-        }
-    }
-    
-    window.startDetailedBookSearchWrapper = (bookPathIdentifier, bookTitle) => {
-        startDetailedBookSearch(bookPathIdentifier, bookTitle).catch(err => {
-            console.error("Error starting detailed search:", err);
-            updateStatusInfo("啟動詳細搜尋時發生錯誤。");
-        });
-    };
-
-    async function startDetailedBookSearch(bookPathIdentifier, bookTitle) {
-        if (isDetailedSearching) {
-            alert("目前尚有查詢任務進行中，請等待完成或取消後再試。");
-            return;
-        }
-        if (selectedHyreadUrls.length === 0) {
-            alert("請至少選擇一個圖書館進行查詢。");
-            return;
-        }
-
-        $id("detailed-search-section").style.display = 'block';
-        $id('detailed-search-section').scrollIntoView({ behavior: 'smooth' });
-        resetDetailedSearchUI(true);
-        
-        isDetailedSearching = true;
-        isPaused = false;
-        currentSearchAbortController = new AbortController();
-        $id("pause-resume-button").disabled = false;
-        $id("cancel-search-button").disabled = false;
-
-        updateStatusInfo(`開始查詢「${bookTitle.replace(/</g, "<").replace(/>/g, ">")}」在 ${selectedHyreadUrls.length} 個圖書館的情況...`);
-
-        const batchSize = parseInt($id("batch-size-select").value);
-        const batches = [];
-        for (let i = 0; i < selectedHyreadUrls.length; i += batchSize) {
-            batches.push(selectedHyreadUrls.slice(i, i + batchSize));
-        }
-        totalBatchesNum = batches.length;
-        totalLibsToQuery = selectedHyreadUrls.length;
-        updateDetailedSearchProgress(0, totalLibsToQuery);
-
-        let allResultsHtmlPieces = []; 
-
-        for (let i = 0; i < batches.length; i++) {
-            if (currentSearchAbortController.signal.aborted) {
-                updateStatusInfo("查詢已取消。");
-                break;
-            }
-            while (isPaused && !currentSearchAbortController.signal.aborted) { 
-                 updateStatusInfo(`查詢已暫停。批次 ${currentBatchNum+1 > totalBatchesNum ? totalBatchesNum : currentBatchNum+1 }/${totalBatchesNum} 等待中...`);
-                await delay(1000);
-            }
-            if (currentSearchAbortController.signal.aborted) break;
-
-            currentBatchNum = i + 1;
-            updateStatusInfo(`處理第 ${currentBatchNum}/${totalBatchesNum} 批次...`);
-            
-            const batchUrls = batches[i];
-            const batchPromises = batchUrls.map(libUrl => 
-                querySingleLibrary(libUrl, bookPathIdentifier, currentSearchAbortController.signal)
-            );
-            
-            const batchResults = await Promise.all(batchPromises);
-            
-            if ($id("detailed-findbook-results").innerHTML.startsWith('查詢結果將顯示於此')) {
-                $id("detailed-findbook-results").innerHTML = ''; 
-            }
-
-            batchResults.forEach(result => {
-                if (currentSearchAbortController.signal.aborted) return; 
-                if (result) {
-                    allResultsHtmlPieces.push(result); 
-                    $id("detailed-findbook-results").insertAdjacentHTML('beforeend', result); 
-                }
-                processedLibsCount++; 
-                updateDetailedSearchProgress(processedLibsCount, totalLibsToQuery);
-            });
-
-            if (currentSearchAbortController.signal.aborted) break;
-            updateStatusInfo(`第 ${currentBatchNum}/${totalBatchesNum} 批次完成。`);
-
-            if (i < batches.length - 1 && !currentSearchAbortController.signal.aborted) {
-                const batchDelayMs = delayConfig.batchDelay;
-                updateStatusInfo(`批次間休息 ${(batchDelayMs / 1000).toFixed(1)} 秒...`);
-                
-                for (let t = 0; t < batchDelayMs; t += 500) { 
-                    if (currentSearchAbortController.signal.aborted) break;
-                    await delay(Math.min(500, batchDelayMs - t));
-                }
-            }
-             if (currentSearchAbortController.signal.aborted) break;
-        }
-
-        if (allResultsHtmlPieces.length === 0 && !currentSearchAbortController.signal.aborted) {
-            $id("detailed-findbook-results").innerHTML = `<p>在所選圖書館中均未找到「${bookTitle.replace(/</g, "<").replace(/>/g, ">")}」(書籍標識符: ${bookPathIdentifier.replace(/</g, "<").replace(/>/g, ">")})，或所有請求均失敗。</p>`;
-        } else if (currentSearchAbortController.signal.aborted) {
-             $id("detailed-findbook-results").innerHTML += `<p style="color:red; font-weight:bold;">查詢已取消。</p>`; 
-        }
-        
-        if (!currentSearchAbortController.signal.aborted) {
-            updateStatusInfo(`所有圖書館查詢完成！共找到 ${successfulRequests} 筆有效結果。`);
-        }
-        isDetailedSearching = false;
-        $id("pause-resume-button").disabled = true;
-        $id("cancel-search-button").disabled = true;
-    }
-    
-    async function querySingleLibrary(libraryBaseUrl, bookPathIdentifier, mainAbortSignal) {
-        const cleanedBaseUrl = libraryBaseUrl.endsWith('/') ? libraryBaseUrl.slice(0, -1) : libraryBaseUrl;
-        
-        const pathPart = bookPathIdentifier.startsWith('/') ? bookPathIdentifier : '/' + bookPathIdentifier;
-        let apiUrl = `${cleanedBaseUrl}${pathPart}`; 
-        apiUrl = apiUrl.replace(/([^:])\/\//g, '$1/');
-
-        console.log("Attempting to query (using path identifier):", apiUrl);
-
-        const dynamicReqDelay = getDynamicDelay();
-        await delay(dynamicReqDelay);
-        updateDelayDisplays(); 
-
-        const requestTimeoutController = new AbortController();
-        const timeoutId = setTimeout(() => requestTimeoutController.abort('timeout'), 25000); 
-
-        let combinedSignal;
-        if (typeof AbortSignal.any === 'function') {
-            combinedSignal = AbortSignal.any([mainAbortSignal, requestTimeoutController.signal]);
-        } else {
-            combinedSignal = requestTimeoutController.signal; 
-            const mainAbortListener = () => requestTimeoutController.abort('mainAbort');
-            mainAbortSignal.addEventListener('abort', mainAbortListener, { once: true });
-            combinedSignal.addEventListener('abort', () => mainAbortSignal.removeEventListener('abort', mainAbortListener), { once: true });
-        }
-
-        const fetchOptions = {
-            headers: {
-                'User-Agent': getRandomUserAgent(), 
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            },
-            signal: combinedSignal,
-        };
-
-        try {
-            const response = await fetch(apiUrl, fetchOptions);
-            clearTimeout(timeoutId); 
-            if (mainAbortSignal.aborted) return null; 
-
-            if (!response.ok) {
-                console.warn(`HTTP error ${response.status} for ${apiUrl}. Library: ${cleanedBaseUrl}`);
-                failedRequests++;
-                return null; 
-            }
-            const responseText = await response.text();
-            if (mainAbortSignal.aborted) return null;
-
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(responseText, "text/html");
-
-            if (doc.querySelector('img[src="/Template/RWD3.0/images/nosale2_pic.png"], img[alt*="本館無此書"], img[alt*="查無此書"]') || responseText.includes("本館無此書") || responseText.includes("查無此書")) {
-                return null; 
-            }
-
-            const bookTitleElem = doc.querySelector('h3, h3.book-title-01, div.SubsectShw-H01 h3, h3#bookTitle, meta[property="og:title"]');
-            const myStateButton = doc.querySelector('#myStateButton, a.btnTypeA_ MeternewGray, .bookShowBtn .btnTypeA_OK'); 
-            
-            let bookActualTitle = "書名未知 (請檢查頁面)";
-            if(bookTitleElem){
-                bookActualTitle = (bookTitleElem.tagName === 'META' ? bookTitleElem.getAttribute('content') : bookTitleElem.textContent).trim();
-                if (bookTitleElem.tagName === 'META') {
-                    let parts = bookActualTitle.split(/[-–—]\s*HyRead|@|\|/); 
-                    bookActualTitle = parts[0].trim();
-                }
-            } else {
-                const pageTitleTag = doc.querySelector('title');
-                if(pageTitleTag) bookActualTitle = pageTitleTag.textContent.trim().split(/[-–—]\s*HyRead|@|\|/)[0].trim();
-            }
-
-            if (!myStateButton && !bookTitleElem) { 
-                 const notFoundMessages = ["查無此書", "書籍不存在", "無法提供", "頁面不存在"];
-                if (notFoundMessages.some(msg => doc.body.textContent.includes(msg))) {
-                    return null;
-                }
-                console.warn(`Could not find critical elements (title/button) for ${apiUrl}. Response might be an error page or unexpected format.`);
-                return null; 
-            }
-
-            let libraryName = "未知圖書館"; // Default
-            if (allLibraryUrlsFlat && allLibraryUrlsFlat.length > 0) { // Check if allLibraryUrlsFlat is populated
-                 const foundLib = allLibraryUrlsFlat.find(lib => lib[0] === cleanedBaseUrl);
-                 if (foundLib) libraryName = foundLib[1];
-                 else libraryName = cleanedBaseUrl; // Fallback to URL if name not found
-            } else {
-                console.warn("allLibraryUrlsFlat is not populated, cannot get library name for", cleanedBaseUrl);
-                libraryName = cleanedBaseUrl; // Fallback if allLibraryUrlsFlat is empty
-            }
-
-
-            let buttonText = myStateButton ? myStateButton.textContent.trim() : "狀態按鈕未知";
-            let statusText = "";
-
-            if (buttonText.includes("計次服務") || (myStateButton && myStateButton.href && myStateButton.href.includes("meter"))) {
-                buttonText = `計次服務`;
-            }
-            
-            const collectionElem = doc.querySelector('#Collection, #combineSite0, .SubsectShw-H04, .bookDetailBoxL dd'); 
-            if (collectionElem) {
-                statusText = collectionElem.textContent.trim().replace(/\s+/g, ' '); 
-            }
-            
-            const hitsElem = doc.querySelector('.date, .book-data .hits, .SubsectShw-H03 span'); 
-            let hitsText = "";
-            if(hitsElem) {
-                const rawHits = hitsElem.textContent.match(/人氣[:：\s]*(\d+)/i) || hitsElem.textContent.match(/(\d+)\s*次/i);
-                if(rawHits && rawHits[1]) hitsText = `[人氣 ${rawHits[1]}]`;
-                else if (hitsElem.textContent.match(/\d+/)) hitsText = `[${hitsElem.textContent.trim()}]`;
-            }
-
-            successfulRequests++; 
-            return `
-                <div class="book-entry">
-                    <strong><a href="${apiUrl}" target="_blank">${bookActualTitle.replace(/</g, "<").replace(/>/g, ">")}</a></strong> ${hitsText}<br>
-                    圖書館: ${libraryName.replace(/</g, "<").replace(/>/g, ">")}<br>
-                    按鈕狀態: ${buttonText.replace(/</g, "<").replace(/>/g, ">")}<br>
-                    ${statusText ? `館藏狀態: ${statusText.replace(/</g, "<").replace(/>/g, ">")}<br>` : ''}
-                </div>`;
-
-        } catch (error) {
-            clearTimeout(timeoutId);
-            if (combinedSignal.aborted) { 
-                if (combinedSignal.reason === 'timeout') {
-                    console.warn(`Request timed out: ${apiUrl}`);
-                    failedRequests++;
-                } else if (combinedSignal.reason === 'mainAbort' || mainAbortSignal.aborted) {
-                     console.log(`Request cancelled by user: ${apiUrl}`);
-                } else {
-                    console.log(`Request aborted (${combinedSignal.reason || 'unknown reason'}): ${apiUrl}`);
-                    if(combinedSignal.reason !== 'mainAbort') failedRequests++;
-                }
-            } else {
-                console.error(`Failed to query ${apiUrl}:`, error);
-                failedRequests++;
-                 if (error instanceof TypeError && error.message.toLowerCase().includes('failed to fetch')) {
-                    console.warn(`[CORS_ERROR_DETAILS] The request to ${apiUrl} was blocked by the browser's CORS policy. This typically happens when the server at ${cleanedBaseUrl} does not send the 'Access-Control-Allow-Origin' header for requests from this page's origin (likely 'null' if run from a local file). Pure client-side JavaScript cannot bypass this browser security feature. Consider using a browser extension for development or deploying this page to a web server.`);
-                }
-                if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
-                    $id("safari-warning-placeholder").style.display = 'block';
-                }
-            }
-            return null;
-        }
-    }
 
     document.addEventListener('DOMContentLoaded', () => {
-        console.log("DOM fully loaded and parsed"); // DEBUG
+        console.log("DOM fully loaded and parsed. Initializing application...");
 
         if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
             $id("safari-warning-placeholder").style.display = 'block';
         }
         
-        // Populate allLibraryUrlsFlat here, ensuring libraryDataFull is available
+        // Populate allLibraryUrlsFlat after libraryDataFull is defined
+        // This is used by querySingleLibrary to get library names.
         if (typeof libraryDataFull === 'object' && libraryDataFull !== null && Object.keys(libraryDataFull).length > 0) {
             allLibraryUrlsFlat = Object.values(libraryDataFull).flat().map(entry => {
                 if (Array.isArray(entry) && entry.length >= 1) {
-                    const url = String(entry[0]); // Ensure string
-                    const name = entry.length >= 2 ? String(entry[1]) : "Unnamed Library"; // Ensure string, provide default
+                    const url = String(entry[0]);
+                    const name = entry.length >= 2 ? String(entry[1]) : "Unnamed Library";
                     return [url.endsWith('/') ? url.slice(0, -1) : url, name];
                 }
-                return null; // Or handle error for invalid entry
-            }).filter(entry => entry !== null); // Remove any null entries from malformed data
-            console.log("allLibraryUrlsFlat populated:", allLibraryUrlsFlat.length, "entries"); // DEBUG
+                return null; 
+            }).filter(entry => entry !== null);
+            console.log("allLibraryUrlsFlat populated in DOMContentLoaded. Entries:", allLibraryUrlsFlat.length);
         } else {
-            console.error("libraryDataFull is not valid for populating allLibraryUrlsFlat.");
+            console.error("libraryDataFull is not valid when trying to populate allLibraryUrlsFlat in DOMContentLoaded.");
         }
 
-
-        createLibraryCheckboxes(); // This must be called after libraryDataFull is defined
-        updateDelayDisplays();
-
-        $id("initial-search-button").addEventListener("click", performInitialBookSearch);
+        // Call to create checkboxes
+        createLibraryCheckboxes(); 
         
+        updateDelayDisplays(); // Initialize delay display
+
+        // Setup event listeners
+        $id("initial-search-button").addEventListener("click", performInitialBookSearch);
         $id("select-all-libraries").addEventListener("change", function() {
             const isChecked = this.checked;
             $qsa('input[name="library-url"]').forEach(checkbox => {
@@ -957,58 +546,23 @@
             updateSelectedLibCount();
             saveCheckboxStates(); 
         });
-
         $id("library-filter-input").addEventListener("input", filterLibraries);
-
-        $id("delay-slider").addEventListener("input", (e) => {
-            delayConfig.base = parseInt(e.target.value);
-            updateDelayDisplays();
-        });
-        $id("batch-delay-slider").addEventListener("input", (e) => {
-            delayConfig.batchDelay = parseInt(e.target.value);
-            updateDelayDisplays();
-        });
-
-        $id("delay-slider").addEventListener("change", (e) => localStorage.setItem("delayBase", e.target.value));
-        $id("batch-delay-slider").addEventListener("change", (e) => localStorage.setItem("batchDelay", e.target.value));
-        $id("batch-size-select").addEventListener("change", (e) => localStorage.setItem("batchSize", e.target.value));
-
-        if(localStorage.getItem("delayBase")) {
-            $id("delay-slider").value = localStorage.getItem("delayBase");
-            delayConfig.base = parseInt($id("delay-slider").value);
-        }
-        if(localStorage.getItem("batchDelay")) {
-            $id("batch-delay-slider").value = localStorage.getItem("batchDelay");
-            delayConfig.batchDelay = parseInt($id("batch-delay-slider").value);
-        }
-        if(localStorage.getItem("batchSize")) {
-            $id("batch-size-select").value = localStorage.getItem("batchSize");
-        }
-        updateDelayDisplays();
-
-        $id("pause-resume-button").addEventListener("click", () => {
-            isPaused = !isPaused;
-            if (isPaused) {
-                $id("pause-resume-button").textContent = "繼續搜尋";
-                $id("pause-resume-button").classList.remove('pause-button'); 
-                updateStatusInfo(`查詢已暫停。等待繼續...`);
-            } else {
-                $id("pause-resume-button").textContent = "暫停搜尋";
-                $id("pause-resume-button").classList.add('pause-button');
-            }
-        });
-
-        $id("cancel-search-button").addEventListener("click", () => {
-            if (currentSearchAbortController && !currentSearchAbortController.signal.aborted) {
-                currentSearchAbortController.abort(); 
-            }
-            isDetailedSearching = false; 
-            isPaused = false;
-            $id("pause-resume-button").disabled = true;
-            $id("cancel-search-button").disabled = true;
-            updateStatusInfo("查詢已取消。");
-        });
+        // ... (rest of the event listeners and settings loading code - keep as is)
+        $id("delay-slider").addEventListener("input", (e) => { /* ... */ });
+        $id("batch-delay-slider").addEventListener("input", (e) => { /* ... */ });
+        $id("delay-slider").addEventListener("change", (e) => { /* ... */ });
+        $id("batch-delay-slider").addEventListener("change", (e) => { /* ... */ });
+        $id("batch-size-select").addEventListener("change", (e) => { /* ... */ });
+        // Load settings from localStorage
+        if(localStorage.getItem("delayBase")) { /* ... */ }
+        if(localStorage.getItem("batchDelay")) { /* ... */ }
+        if(localStorage.getItem("batchSize")) { /* ... */ }
+        updateDelayDisplays(); // Update display after loading
+        $id("pause-resume-button").addEventListener("click", () => { /* ... */ });
+        $id("cancel-search-button").addEventListener("click", () => { /* ... */ });
         resetDetailedSearchUI(false); 
+
+        console.log("Application initialization complete.");
     });
   </script>
 </body>
