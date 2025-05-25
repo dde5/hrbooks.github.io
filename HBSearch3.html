@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hyread 電子書多館查詢 Pro</title>
+  <title>Hyread 電子書多館查詢 Pro (Path Optimized)</title>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <style>
     :root {
@@ -222,7 +222,7 @@
 
 <body>
   <header>
-    <h1>Hyread 電子書多館查詢 Pro</h1>
+    <h1>Hyread 電子書多館查詢 Pro (Path Optimized)</h1>
   </header>
 
   <div class="main-container">
@@ -297,7 +297,7 @@
   </div>
 
   <footer>
-    <p>&copy; 2024 Hyread 多館查詢 Pro. 改良版。</p>
+    <p>© 2024 Hyread 多館查詢 Pro. 改良版。</p>
   </footer>
 
   <script>
@@ -338,9 +338,7 @@
             ["https://taichunggov.ebook.hyread.com.tw", "臺中市立圖書館"],
             ["https://bocach.ebook.hyread.com.tw", "彰化縣公共圖書館"],
             ["https://chcedu.ebook.hyread.com.tw", "彰化雲端電子書庫"],
-            // 注意：南投縣有兩個，這裡選擇一個或你確定正確的那個
             ["https://nthccgov.ebook.hyread.com.tw", "南投縣公共圖書館"], 
-            // ["https://nthccgov.ebook.hyread.com.tw", "南投縣政府公共圖書館"], // 這是你原始列表中的重複或相似條目
             ["https://ylccb.ebook.hyread.com.tw", "雲林縣公共圖書館"],
         ],
         "南部地區": [
@@ -364,7 +362,7 @@
             ["https://lieyu.ebook.hyread.com.tw", "金門縣烈嶼鄉公所"],
             ["https://matsucc.ebook.hyread.com.tw", "連江縣公共圖書館"],
         ],
-        "苗栗地區": [ // 你提供的原始列表中苗栗的圖書館非常多
+        "苗栗地區": [ 
             ["https://miaolilib.ebook.hyread.com.tw", "苗栗縣立圖書館"],
             ["https://mlcg.ebook.hyread.com.tw", "苗栗市立圖書館"],
             ["https://sanwan.ebook.hyread.com.tw", "苗栗縣三灣鄉立圖書館"],
@@ -382,16 +380,15 @@
         ],
         "國立與其他": [
             ["https://ncl.ebook.hyread.com.tw", "國家圖書館"],
-            ["https://ebook.nlpi.edu.tw", "國立公共資訊圖書館"], // 確保末尾沒有斜線
+            ["https://ebook.nlpi.edu.tw", "國立公共資訊圖書館"], 
             ["https://ntledu.ebook.hyread.com.tw", "國立臺灣圖書館"],
-            // 注意：這個 URL 較長，確保它是正確的基礎 URL
             ["https://ncltrccs.ebook.hyread.com.tw", "國家圖書館臺灣漢學資源中心"], 
             ["https://hsinrong.ebook.hyread.com.tw", "欣榮紀念圖書館"],
         ]
     };
     // =======================================================================
 
-    let allLibraryUrlsFlat = Object.values(libraryDataFull).flat();
+    let allLibraryUrlsFlat = []; // Will be populated after libraryDataFull is defined
 
     const $id = (id) => document.getElementById(id);
     const $qs = (selector) => document.querySelector(selector);
@@ -484,7 +481,6 @@
                 const checkbox = document.createElement("input");
                 checkbox.type = "checkbox";
                 checkbox.name = "library-url";
-                // Store cleaned URL in value (without trailing slash)
                 checkbox.value = url.endsWith('/') ? url.slice(0, -1) : url;
                 checkbox.id = id;
                 checkbox.addEventListener("change", () => {
@@ -569,13 +565,14 @@
         $id("initial-results-section").style.display = 'block';
         $id("initial-results").innerHTML = '<p>正在向 Hyread 主站查詢書名，請稍候...</p>';
 
+        // Hyread主站的URL通常不需要代理，因為我們是從瀏覽器直接訪問
         const searchUrl = `https://ebook.hyread.com.tw/searchList.jsp?search_field=FullText&search_input=${encodeURIComponent(bookName)}`;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 20000);
 
         try {
             const response = await fetch(searchUrl, {
-                headers: { 'User-Agent': getRandomUserAgent() },
+                // headers: { 'User-Agent': getRandomUserAgent() }, // 通常主站查詢不需要偽造UA
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
@@ -597,14 +594,20 @@
                 const linkElement = item.querySelector('a');
                 if (linkElement) {
                     const title = linkElement.textContent.trim();
-                    const href = linkElement.getAttribute('href');
-                    const bookIdMatch = href ? href.match(/id=(\d+)/) : null;
-                    if (bookIdMatch) {
-                        const bookId = bookIdMatch[1];
+                    const rawHref = linkElement.getAttribute('href'); 
+
+                    const bookIdMatchSimple = rawHref ? rawHref.match(/id=(\d+)/) : null;
+                    const simpleBookIdForDisplay = bookIdMatchSimple ? bookIdMatchSimple[1] : "未知ID";
+
+                    if (rawHref) { 
                         resultsHtml += `
                             <div class="result-item">
-                                <span>${title.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span>
-                                <button class="action-button" onclick="startDetailedBookSearchWrapper('${bookId}', '${title.replace(/'/g, "\\'").replace(/"/g, "&quot;")}')">查詢此書在各館情況</button>
+                                <span>${title.replace(/</g, "<").replace(/>/g, ">")} (ID: ${simpleBookIdForDisplay})</span>
+                                <button class="action-button" 
+                                        onclick="startDetailedBookSearchWrapper('${rawHref.replace(/'/g, "\\'").replace(/"/g, """)}', 
+                                                                             '${title.replace(/'/g, "\\'").replace(/"/g, """)}')">
+                                    查詢此書在各館情況
+                                </button>
                             </div>`;
                     }
                 }
@@ -617,8 +620,8 @@
             let errorMsg = '查詢 Hyread 主站時發生錯誤。';
             if (error.name === 'AbortError') {
                 errorMsg += ' 請求超時。';
-            } else if (error.message.includes('Failed to fetch')) {
-                errorMsg += ' 網路連線失敗。';
+            } else if (error.message.toLowerCase().includes('failed to fetch')) { // More robust check for network errors
+                errorMsg += ' 網路連線失敗或CORS問題。';
                 if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
                      $id("safari-warning-placeholder").style.display = 'block';
                 }
@@ -632,14 +635,14 @@
         }
     }
     
-    window.startDetailedBookSearchWrapper = (bookId, bookTitle) => {
-        startDetailedBookSearch(bookId, bookTitle).catch(err => {
+    window.startDetailedBookSearchWrapper = (bookPathIdentifier, bookTitle) => {
+        startDetailedBookSearch(bookPathIdentifier, bookTitle).catch(err => {
             console.error("Error starting detailed search:", err);
             updateStatusInfo("啟動詳細搜尋時發生錯誤。");
         });
     };
 
-    async function startDetailedBookSearch(bookId, bookTitle) {
+    async function startDetailedBookSearch(bookPathIdentifier, bookTitle) {
         if (isDetailedSearching) {
             alert("目前尚有查詢任務進行中，請等待完成或取消後再試。");
             return;
@@ -659,8 +662,7 @@
         $id("pause-resume-button").disabled = false;
         $id("cancel-search-button").disabled = false;
 
-
-        updateStatusInfo(`開始查詢「${bookTitle.replace(/</g, "&lt;").replace(/>/g, "&gt;")}」在 ${selectedHyreadUrls.length} 個圖書館的情況...`);
+        updateStatusInfo(`開始查詢「${bookTitle.replace(/</g, "<").replace(/>/g, ">")}」在 ${selectedHyreadUrls.length} 個圖書館的情況...`);
 
         const batchSize = parseInt($id("batch-size-select").value);
         const batches = [];
@@ -671,7 +673,7 @@
         totalLibsToQuery = selectedHyreadUrls.length;
         updateDetailedSearchProgress(0, totalLibsToQuery);
 
-        let allResultsHtmlPieces = []; // Store HTML pieces to join later if needed, or append directly
+        let allResultsHtmlPieces = []; 
 
         for (let i = 0; i < batches.length; i++) {
             if (currentSearchAbortController.signal.aborted) {
@@ -689,7 +691,7 @@
             
             const batchUrls = batches[i];
             const batchPromises = batchUrls.map(libUrl => 
-                querySingleLibrary(libUrl, bookId, currentSearchAbortController.signal)
+                querySingleLibrary(libUrl, bookPathIdentifier, currentSearchAbortController.signal)
             );
             
             const batchResults = await Promise.all(batchPromises);
@@ -701,11 +703,9 @@
             batchResults.forEach(result => {
                 if (currentSearchAbortController.signal.aborted) return; 
                 if (result) {
-                    allResultsHtmlPieces.push(result); // Collect results
+                    allResultsHtmlPieces.push(result); 
                     $id("detailed-findbook-results").insertAdjacentHTML('beforeend', result); 
                 }
-                // Increment processed count regardless of pause, as the request *was* made.
-                // The pause just defers further requests.
                 processedLibsCount++; 
                 updateDetailedSearchProgress(processedLibsCount, totalLibsToQuery);
             });
@@ -726,7 +726,7 @@
         }
 
         if (allResultsHtmlPieces.length === 0 && !currentSearchAbortController.signal.aborted) {
-            $id("detailed-findbook-results").innerHTML = `<p>在所選圖書館中均未找到「${bookTitle.replace(/</g, "&lt;").replace(/>/g, "&gt;")}」，或所有請求均失敗。</p>`;
+            $id("detailed-findbook-results").innerHTML = `<p>在所選圖書館中均未找到「${bookTitle.replace(/</g, "<").replace(/>/g, ">")}」(書籍標識符: ${bookPathIdentifier.replace(/</g, "<").replace(/>/g, ">")})，或所有請求均失敗。</p>`;
         } else if (currentSearchAbortController.signal.aborted) {
              $id("detailed-findbook-results").innerHTML += `<p style="color:red; font-weight:bold;">查詢已取消。</p>`; 
         }
@@ -739,10 +739,17 @@
         $id("cancel-search-button").disabled = true;
     }
     
-    async function querySingleLibrary(libraryBaseUrl, bookId, mainAbortSignal) {
+    async function querySingleLibrary(libraryBaseUrl, bookPathIdentifier, mainAbortSignal) {
         const cleanedBaseUrl = libraryBaseUrl.endsWith('/') ? libraryBaseUrl.slice(0, -1) : libraryBaseUrl;
-        const apiUrl = `${cleanedBaseUrl}/${bookId}`; 
-        console.log("Attempting to query:", apiUrl);
+        
+        const pathPart = bookPathIdentifier.startsWith('/') ? bookPathIdentifier : '/' + bookPathIdentifier;
+        let apiUrl = `${cleanedBaseUrl}${pathPart}`; 
+
+        // 處理 apiUrl 中可能存在的 "//" (雖然瀏覽器通常會處理，但最好規範化)
+        apiUrl = apiUrl.replace(/([^:])\/\//g, '$1/');
+
+
+        console.log("Attempting to query (using path identifier):", apiUrl);
 
         const dynamicReqDelay = getDynamicDelay();
         await delay(dynamicReqDelay);
@@ -763,11 +770,10 @@
 
         const fetchOptions = {
             headers: {
-                'User-Agent': getRandomUserAgent(),
+                'User-Agent': getRandomUserAgent(), // 查詢各分館時，UA 可能更重要
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
             },
             signal: combinedSignal,
-            // mode: 'no-cors' // DO NOT USE THIS: it makes responses opaque and unusable for parsing.
         };
 
         try {
@@ -776,10 +782,8 @@
             if (mainAbortSignal.aborted) return null; 
 
             if (!response.ok) {
-                // Log the error but allow the function to return null, will be counted as failedRequests later
-                console.warn(`HTTP error ${response.status} for ${apiUrl}. This library might not have the book or uses a different URL structure.`);
-                // Do not throw here, let it be counted as a failed request normally
-                failedRequests++;
+                console.warn(`HTTP error ${response.status} for ${apiUrl}. Library: ${cleanedBaseUrl}`);
+                failedRequests++; // Count as failed if HTTP status is not OK
                 return null; 
             }
             const responseText = await response.text();
@@ -788,41 +792,54 @@
             const parser = new DOMParser();
             const doc = parser.parseFromString(responseText, "text/html");
 
-            if (doc.querySelector('img[src="/Template/RWD3.0/images/nosale2_pic.png"], img[alt="本館無此書"]')) {
-                // This is a "not found" success case for this library, not an error.
+            // 舊版檢查方式: $(data).find('img[src="/Template/RWD3.0/images/nosale2_pic.png"]').length > 0
+            if (doc.querySelector('img[src="/Template/RWD3.0/images/nosale2_pic.png"], img[alt*="本館無此書"], img[alt*="查無此書"]') || responseText.includes("本館無此書") || responseText.includes("查無此書")) {
                 return null; 
             }
 
-            const bookTitleElem = doc.querySelector('h3.book-title-01, div.SubsectShw-H01 h3, h3#bookTitle, meta[property="og:title"]');
-            const myStateButton = doc.querySelector('#myStateButton, a.btnTypeA_ MeternewGray'); 
+            // 舊版選擇器: 'h3', '.date', '#myStateButton', '#Collection', '#combineSite0'
+            const bookTitleElem = doc.querySelector('h3, h3.book-title-01, div.SubsectShw-H01 h3, h3#bookTitle, meta[property="og:title"]');
+            const myStateButton = doc.querySelector('#myStateButton, a.btnTypeA_ MeternewGray, .bookShowBtn .btnTypeA_OK'); // Added another common button class
             
-            let bookActualTitle = "書名未知";
+            let bookActualTitle = "書名未知 (請檢查頁面)";
             if(bookTitleElem){
                 bookActualTitle = (bookTitleElem.tagName === 'META' ? bookTitleElem.getAttribute('content') : bookTitleElem.textContent).trim();
                 if (bookTitleElem.tagName === 'META') {
                     let parts = bookActualTitle.split(/[-–—]\s*HyRead|@|\|/); 
                     bookActualTitle = parts[0].trim();
                 }
+            } else {
+                // 如果連書名都找不到，但請求是成功的 (非404)，可能頁面結構差異大
+                // 可以嘗試從 <title> 標籤獲取
+                const pageTitleTag = doc.querySelector('title');
+                if(pageTitleTag) bookActualTitle = pageTitleTag.textContent.trim().split(/[-–—]\s*HyRead|@|\|/)[0].trim();
             }
 
-            if (!myStateButton) {
-                const notFoundMessages = ["查無此書", "書籍不存在", "無法提供"];
+
+            if (!myStateButton && !bookTitleElem) { // 如果連標題和按鈕都找不到，可能真的是空頁面或錯誤頁
+                 const notFoundMessages = ["查無此書", "書籍不存在", "無法提供", "頁面不存在"];
                 if (notFoundMessages.some(msg => doc.body.textContent.includes(msg))) {
                     return null;
                 }
-                console.warn(`Could not find state button for ${apiUrl}. Title found: ${bookActualTitle}. Might be an error page or different layout.`);
-                if (!bookTitleElem && !doc.querySelector('.SubsectShw-H01')) return null;
+                console.warn(`Could not find critical elements (title/button) for ${apiUrl}. Response might be an error page or unexpected format.`);
+                // As a last resort, if the page is not explicitly "not found", we might still log it as a potential find but with a warning
+                // However, without a state button, it's hard to tell. For now, treat as not found if no clear indicators.
+                // Forcing a "found" state here could be misleading.
+                // If the old version could parse this, there's a subtle parsing difference.
+                // Let's assume if no key elements, it's not a useful result.
+                return null; 
             }
 
-            let libraryName = allLibraryUrlsFlat.find(lib => lib[0] === cleanedBaseUrl)?.[1] || cleanedBaseUrl; // Use cleanedBaseUrl for lookup
-            let buttonText = myStateButton ? myStateButton.textContent.trim() : "狀態未知";
+
+            let libraryName = allLibraryUrlsFlat.find(lib => lib[0] === cleanedBaseUrl)?.[1] || cleanedBaseUrl;
+            let buttonText = myStateButton ? myStateButton.textContent.trim() : "狀態按鈕未知";
             let statusText = "";
 
             if (buttonText.includes("計次服務") || (myStateButton && myStateButton.href && myStateButton.href.includes("meter"))) {
                 buttonText = `計次服務`;
             }
             
-            const collectionElem = doc.querySelector('#Collection, #combineSite0, .SubsectShw-H04'); 
+            const collectionElem = doc.querySelector('#Collection, #combineSite0, .SubsectShw-H04, .bookDetailBoxL dd');  // Added another common status selector
             if (collectionElem) {
                 statusText = collectionElem.textContent.trim().replace(/\s+/g, ' '); 
             }
@@ -830,17 +847,18 @@
             const hitsElem = doc.querySelector('.date, .book-data .hits, .SubsectShw-H03 span'); 
             let hitsText = "";
             if(hitsElem) {
-                const rawHits = hitsElem.textContent.match(/\d+/); 
-                if(rawHits) hitsText = `[人氣 ${rawHits[0]}]`;
+                const rawHits = hitsElem.textContent.match(/人氣[:：\s]*(\d+)/i) || hitsElem.textContent.match(/(\d+)\s*次/i);
+                if(rawHits && rawHits[1]) hitsText = `[人氣 ${rawHits[1]}]`;
+                else if (hitsElem.textContent.match(/\d+/)) hitsText = `[${hitsElem.textContent.trim()}]`; // Fallback
             }
 
-            successfulRequests++;
+            successfulRequests++; // Increment only if we are confident it's a valid book page
             return `
                 <div class="book-entry">
-                    <strong><a href="${apiUrl}" target="_blank">${bookActualTitle.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</a></strong> ${hitsText}<br>
-                    圖書館: ${libraryName.replace(/</g, "&lt;").replace(/>/g, "&gt;")}<br>
-                    按鈕狀態: ${buttonText.replace(/</g, "&lt;").replace(/>/g, "&gt;")}<br>
-                    ${statusText ? `館藏狀態: ${statusText.replace(/</g, "&lt;").replace(/>/g, "&gt;")}<br>` : ''}
+                    <strong><a href="${apiUrl}" target="_blank">${bookActualTitle.replace(/</g, "<").replace(/>/g, ">")}</a></strong> ${hitsText}<br>
+                    圖書館: ${libraryName.replace(/</g, "<").replace(/>/g, ">")}<br>
+                    按鈕狀態: ${buttonText.replace(/</g, "<").replace(/>/g, ">")}<br>
+                    ${statusText ? `館藏狀態: ${statusText.replace(/</g, "<").replace(/>/g, ">")}<br>` : ''}
                 </div>`;
 
         } catch (error) {
@@ -874,10 +892,9 @@
             $id("safari-warning-placeholder").style.display = 'block';
         }
         
-        // Regenerate allLibraryUrlsFlat after libraryDataFull is defined
         allLibraryUrlsFlat = Object.values(libraryDataFull).flat().map(entry => [
-            entry[0].endsWith('/') ? entry[0].slice(0, -1) : entry[0], // Cleaned URL
-            entry[1] // Name
+            entry[0].endsWith('/') ? entry[0].slice(0, -1) : entry[0], 
+            entry[1] 
         ]);
 
         createLibraryCheckboxes(); 
