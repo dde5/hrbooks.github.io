@@ -1,756 +1,986 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hyread 電子書館藏查詢系統</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hyread 電子書多館查詢 Pro (v5)</title> <!-- 版本號更新 -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #007bff;
+      --secondary-color: #6c757d;
+      --success-color: #28a745;
+      --warning-color: #ffc107;
+      --danger-color: #dc3545;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --border-radius: 0.3rem;
+      --box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
+    body {
+      font-family: var(--font-family);
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+      background-color: #eef2f7;
+      color: var(--dark-color);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    
+    .main-container {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+    header {
+      background: linear-gradient(135deg, var(--primary-color), #0056b3);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      border-bottom: 5px solid #0056b3;
+    }
+    header h1 { margin: 0; font-size: 2rem; }
 
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+    .search-area, .settings-area, .library-selection-area, .results-area, .findbook-area {
+      margin-bottom: 25px;
+      padding: 20px;
+      background-color: var(--light-color);
+      border-radius: var(--border-radius);
+      border: 1px solid #dee2e6;
+    }
+    
+    .search-area h2, .settings-area h2, .library-selection-area h2, .results-area h2, .findbook-area h2 {
+        margin-top: 0;
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: 10px;
+        font-size: 1.5rem;
+    }
 
-        .header h1 {
-            color: white;
-            font-size: 2.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            margin-bottom: 10px;
-        }
+    input[type="text"], select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ced4da;
+      border-radius: var(--border-radius);
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
+    
+    button, .button {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 10px 18px;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.2s ease-in-out;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+    button:hover, .button:hover { background-color: #0056b3; }
+    button:disabled { background-color: var(--secondary-color); cursor: not-allowed; }
 
-        .header p {
-            color: rgba(255,255,255,0.9);
-            font-size: 1.1rem;
-        }
+    .search-init-button { width: auto; min-width: 120px; }
+    .action-button { padding: 8px 12px; font-size: 0.9rem; margin-left: 5px; }
+    .pause-button { background-color: var(--warning-color); color: black; }
+    .pause-button:hover { background-color: #e0a800; }
+    .cancel-button { background-color: var(--danger-color); }
+    .cancel-button:hover { background-color: #c82333; }
 
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
+    #library-checkboxes-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 10px;
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      background-color: white;
+    }
+    #library-checkboxes-container label {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      background-color: #f8f9fa;
+      border-radius: var(--border-radius);
+      transition: background-color 0.2s;
+      cursor: pointer;
+    }
+    #library-checkboxes-container label:hover { background-color: #e9ecef; }
+    #library-checkboxes-container input[type="checkbox"] {
+      margin-right: 10px;
+      width: auto; 
+      margin-bottom: 0; 
+    }
+    .library-group { margin-bottom: 15px; }
+    .library-group h4 { margin-bottom: 8px; font-size: 1.1rem; color: var(--secondary-color); }
 
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-        }
+    .progress-container {
+      margin: 15px 0;
+      background-color: #e9ecef;
+      border-radius: var(--border-radius);
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 25px;
+      background: linear-gradient(45deg, var(--success-color), #218838);
+      width: 0%;
+      transition: width 0.3s ease;
+      text-align: center;
+      line-height: 25px;
+      color: white;
+      font-size: 0.9rem;
+    }
 
-        .search-panel {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
+    .status-info {
+      margin: 15px 0;
+      padding: 12px;
+      background-color: #e6f7ff;
+      border: 1px solid #b3e0ff;
+      border-radius: var(--border-radius);
+      font-size: 0.95rem;
+    }
+    .status-info div { margin-bottom: 5px; }
+    .status-info span { font-weight: bold; }
 
-        .library-panel {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
+    .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+    }
+    .setting-item label { display: block; margin-bottom: 8px; font-weight: 500; }
+    .setting-item input[type="range"] { width: 100%; }
+    .setting-item span { font-weight: normal; color: var(--primary-color); }
 
-        .panel-title {
-            font-size: 1.4rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: #4a5568;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+    #initial-results .result-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    #initial-results .result-item:last-child { border-bottom: none; }
+    #initial-results .result-item span { flex-grow: 1; margin-right: 10px; }
 
-        .search-input {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            margin-bottom: 15px;
-        }
+    #detailed-findbook-results .book-entry {
+      padding: 15px;
+      margin-bottom: 15px;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+    }
+    #detailed-findbook-results .book-entry a { color: var(--primary-color); text-decoration: none; font-weight: bold; }
+    #detailed-findbook-results .book-entry a:hover { text-decoration: underline; }
+    #detailed-findbook-results .book-entry hr { border: 0; border-top: 1px solid #eee; margin: 10px 0; }
+    
+    .safari-warning {
+        background-color: #fff3cd;
+        border-color: #ffeeba;
+        color: #856404;
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid transparent;
+        border-radius: var(--border-radius);
+    }
 
-        .search-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
+    footer {
+      text-align: center;
+      padding: 15px;
+      background-color: var(--dark-color);
+      color: var(--light-color);
+      margin-top: auto;
+      font-size: 0.9em;
+    }
 
-        .search-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .search-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .search-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .library-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .control-btn {
-            padding: 8px 16px;
-            border: 1px solid #e2e8f0;
-            background: white;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-        }
-
-        .control-btn:hover {
-            background: #f7fafc;
-            border-color: #667eea;
-        }
-
-        .control-btn.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        .library-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 15px;
-            max-height: 400px;
-            overflow-y: auto;
-            padding: 10px;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            background: #f8fafc;
-        }
-
-        .library-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            background: white;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .library-item:hover {
-            background: #edf2f7;
-            transform: translateY(-1px);
-        }
-
-        .library-checkbox {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-
-        .library-name {
-            font-size: 0.9rem;
-            color: #4a5568;
-            cursor: pointer;
-        }
-
-        .results-section {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-top: 20px;
-        }
-
-        .search-results {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-        }
-
-        @media (max-width: 768px) {
-            .search-results {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-        }
-
-        .result-panel {
-            background: #f8fafc;
-            border-radius: 10px;
-            padding: 20px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .result-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: #2d3748;
-        }
-
-        .book-item {
-            background: white;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-left: 4px solid #667eea;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .book-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-        }
-
-        .book-title {
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 5px;
-        }
-
-        .find-btn {
-            background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .find-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 3px 8px rgba(56, 178, 172, 0.3);
-        }
-
-        .library-result {
-            background: white;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-left: 4px solid #48bb78;
-            animation: fadeInUp 0.5s ease;
-        }
-
-        .library-name-result {
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 8px;
-        }
-
-        .book-status {
-            color: #718096;
-            font-size: 0.9rem;
-            margin-bottom: 5px;
-        }
-
-        .book-link {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .book-link:hover {
-            text-decoration: underline;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #718096;
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .no-results {
-            text-align: center;
-            padding: 40px;
-            color: #718096;
-            font-size: 1.1rem;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 4px;
-            background: #e2e8f0;
-            border-radius: 2px;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 15px;
-            font-size: 0.9rem;
-            color: #718096;
-        }
-    </style>
+    @media (max-width: 768px) {
+      header h1 { font-size: 1.5rem; }
+      .search-area h2, .settings-area h2, .library-selection-area h2, .results-area h2, .findbook-area h2 { font-size: 1.25rem; }
+      #library-checkboxes-container { grid-template-columns: 1fr; }
+      .settings-grid { grid-template-columns: 1fr; }
+      button, .button { width: 100%; margin-bottom: 10px; }
+      .action-button { width: auto; }
+      .search-init-button { width: 100%; }
+      #initial-results .result-item { flex-direction: column; align-items: flex-start; }
+      #initial-results .result-item button { margin-top: 10px; }
+    }
+  </style>
 </head>
+
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📚 Hyread 電子書館藏查詢</h1>
-            <p>搜尋全台 47 所圖書館的電子書館藏</p>
-        </div>
+  <header>
+    <h1>Hyread 電子書多館查詢 Pro (v5)</h1>
+  </header>
 
-        <div class="main-content">
-            <div class="search-panel">
-                <div class="panel-title">
-                    🔍 書籍搜尋
-                </div>
-                <input type="text" id="book-name" class="search-input" placeholder="請輸入書名...">
-                <button id="search-button" class="search-btn">
-                    <span class="btn-text">開始搜尋</span>
-                </button>
-                <div class="progress-bar" id="progress-bar" style="display: none;">
-                    <div class="progress-fill" id="progress-fill"></div>
-                </div>
-                <div class="stats" id="search-stats" style="display: none;">
-                    <span>已搜尋: <span id="searched-count">0</span></span>
-                    <span>找到: <span id="found-count">0</span></span>
-                </div>
-            </div>
-
-            <div class="library-panel">
-                <div class="panel-title">
-                    🏛️ 圖書館選擇
-                </div>
-                <div class="library-controls">
-                    <button class="control-btn" onclick="selectAll()">全選</button>
-                    <button class="control-btn" onclick="selectNone()">清除</button>
-                    <button class="control-btn" onclick="selectMajor()">主要館</button>
-                    <button class="control-btn" onclick="selectLocal()">地方館</button>
-                </div>
-                <div class="library-grid" id="library-grid">
-                    <!-- 圖書館選項將動態生成 -->
-                </div>
-            </div>
-        </div>
-
-        <div class="results-section" id="results-section" style="display: none;">
-            <div class="search-results">
-                <div class="result-panel">
-                    <div class="result-title">📖 搜尋結果</div>
-                    <div id="search-results"></div>
-                </div>
-                <div class="result-panel">
-                    <div class="result-title">📍 館藏狀態</div>
-                    <div id="library-results"></div>
-                </div>
-            </div>
-        </div>
+  <div class="main-container">
+    <div id="safari-warning-placeholder" class="safari-warning" style="display:none;">
+      ⚠️ <strong>Safari 使用者請注意：</strong>由於瀏覽器安全限制 (CORS)，部分或全部圖書館的查詢功能可能無法正常運作。建議使用 Chrome 或 Firefox 瀏覽器以獲得最佳體驗。如果問題持續，這可能是 Hyread 伺服器端對請求來源的限制。
     </div>
 
-    <script>
-        // 圖書館資料
-        const libraries = [
-            ["https://tpml.ebook.hyread.com.tw", "台北市立圖書館", "major"],
-            ["https://tphcc.ebook.hyread.com.tw", "新北市立圖書館", "major"],
-            ["https://klccab.ebook.hyread.com.tw", "基隆市文化局", "local"],
-            ["https://ncl.ebook.hyread.com.tw", "國家圖書館", "major"],
-            ["https://ebook.nlpi.edu.tw/", "國立公共資訊圖書館", "major"],
-            ["https://ntledu.ebook.hyread.com.tw", "國立臺灣圖書館", "major"],
-            ["https://tycccgov.ebook.hyread.com.tw", "桃園市立圖書館", "major"],
-            ["https://hcmlgov.ebook.hyread.com.tw", "新竹市圖書館", "local"],
-            ["https://hchcc.ebook.hyread.com.tw", "新竹縣公共圖書館", "local"],
-            ["https://taichunggov.ebook.hyread.com.tw", "臺中市立圖書館", "major"],
-            ["https://bocach.ebook.hyread.com.tw", "彰化縣公共圖書館", "local"],
-            ["https://chcedu.ebook.hyread.com.tw", "彰化雲端電子書庫", "local"],
-            ["https://ilccb.ebook.hyread.com.tw", "宜蘭縣政府文化局", "local"],
-            ["https://hccc.ebook.hyread.com.tw", "花蓮縣文化局", "local"],
-            ["https://cabcygov.ebook.hyread.com.tw", "嘉義市政府文化局", "local"],
-            ["https://cycabgov.ebook.hyread.com.tw", "嘉義縣公共圖書館", "local"],
-            ["https://nthccgov.ebook.hyread.com.tw", "南投縣公共圖書館", "local"],
-            ["https://pthggov.ebook.hyread.com.tw", "屏東縣公共圖書館", "local"],
-            ["https://cclttct.ebook.hyread.com.tw", "臺東縣政府文化處", "local"],
-            ["https://phhcc.ebook.hyread.com.tw", "澎湖縣圖書館", "local"],
-            ["https://miaolilib.ebook.hyread.com.tw", "苗栗縣立圖書館", "local"],
-            ["https://mlcg.ebook.hyread.com.tw", "苗栗市立圖書館", "local"],
-            ["https://sanwan.ebook.hyread.com.tw", "苗栗縣三灣鄉立圖書館", "local"],
-            ["https://dahu.ebook.hyread.com.tw", "苗栗縣大湖鄉立圖書館", "local"],
-            ["https://gungguan.ebook.hyread.com.tw", "苗栗縣公館鄉立圖書館", "local"],
-            ["https://xihu.ebook.hyread.com.tw", "苗栗縣西湖鄉立圖書館", "local"],
-            ["https://nanchuang.ebook.hyread.com.tw", "苗栗縣南庄鄉立圖書館", "local"],
-            ["https://houlong.ebook.hyread.com.tw", "苗栗縣後龍鎮立圖書館", "local"],
-            ["https://yuanli.ebook.hyread.com.tw", "苗栗縣苑裡鎮立圖書館", "local"],
-            ["https://tungshiau.ebook.hyread.com.tw", "苗栗縣通霄鎮立圖書館", "local"],
-            ["https://zaociao.ebook.hyread.com.tw", "苗栗縣造橋鄉立圖書館", "local"],
-            ["https://stan.ebook.hyread.com.tw", "苗栗縣獅潭鄉圖書館", "local"],
-            ["https://toufenlib.ebook.hyread.com.tw", "苗栗縣頭份市立圖書館", "local"],
-            ["https://touwu.ebook.hyread.com.tw", "苗栗縣頭屋鄉立圖書館", "local"],
-            ["https://ncltrccs.ebook.hyread.com.tw", "國家圖書館臺灣漢學資源中心", "major"],
-            ["https://ylccb.ebook.hyread.com.tw", "雲林縣公共圖書館", "local"],
-            ["https://hsinrong.ebook.hyread.com.tw", "欣榮紀念圖書館", "local"],
-            ["https://jianlib.ebook.hyread.com.tw", "花蓮縣吉安鄉立圖書館", "local"],
-            ["https://hualienlib.ebook.hyread.com.tw", "花蓮縣花蓮市立圖書館", "local"],
-            ["https://shlinlib.ebook.hyread.com.tw", "秀林鄉立圖書館", "local"],
-            ["https://sinchenlib.ebook.hyread.com.tw", "新城鄉立圖書館", "local"],
-            ["https://tnml.ebook.hyread.com.tw", "臺南市立圖書館", "major"],
-            ["https://ksml.ebook.hyread.com.tw", "高雄市立圖書館", "major"],
-            ["https://kinmen.ebook.hyread.com.tw", "金門縣文化局", "local"],
-            ["https://lieyu.ebook.hyread.com.tw", "金門縣烈嶼鄉公所", "local"],
-            ["https://matsucc.ebook.hyread.com.tw", "連江縣公共圖書館", "local"]
-        ];
+    <section class="search-area">
+      <h2>1. 輸入書名關鍵字</h2>
+      <input type="text" id="book-name-input" placeholder="例如：原子習慣">
+      <button id="initial-search-button" class="search-init-button">搜尋書名</button>
+    </section>
 
-        let selectedLibraries = [];
-        let isSearching = false;
+    <section class="results-area" id="initial-results-section" style="display:none;">
+      <h2>2. 選擇要查詢的書籍版本</h2>
+      <div id="initial-results"></div>
+    </section>
+    
+    <section class="library-selection-area">
+        <h2>3. 選擇圖書館 (<span id="selected-lib-count">0</span> 個已選)</h2>
+        <div>
+            <input type="checkbox" id="select-all-libraries" style="width:auto; margin-bottom: 0;">
+            <label for="select-all-libraries" style="cursor:pointer; font-weight:bold;">全選/全不選 (目前篩選結果)</label>
+            <input type="text" id="library-filter-input" placeholder="篩選圖書館名稱..." style="margin-top:10px; margin-bottom:5px;">
+        </div>
+        <div id="library-checkboxes-container">
+            <!-- Checkboxes will be populated by JavaScript -->
+        </div>
+    </section>
 
-        // 初始化圖書館列表
-        function initLibraries() {
-            const grid = document.getElementById('library-grid');
-            libraries.forEach((library, index) => {
-                const item = document.createElement('div');
-                item.className = 'library-item';
-                
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.className = 'library-checkbox';
-                checkbox.id = `lib-${index}`;
-                checkbox.value = library[0];
-                checkbox.addEventListener('change', updateSelectedLibraries);
-                
-                const label = document.createElement('label');
-                label.className = 'library-name';
-                label.htmlFor = `lib-${index}`;
-                label.textContent = library[1];
-                
-                item.appendChild(checkbox);
-                item.appendChild(label);
-                grid.appendChild(item);
+    <section class="settings-area">
+      <h2>4. 進階設定 (可選)</h2>
+      <div class="settings-grid">
+        <div class="setting-item">
+          <label for="delay-slider">請求間隔基礎值: <span id="current-delay-display">1.0秒</span></label>
+          <input type="range" id="delay-slider" min="500" max="5000" value="1000">
+          <span>(0.5秒 - 5秒)</span>
+        </div>
+        <div class="setting-item">
+          <label for="batch-delay-slider">批次間延遲: <span id="batch-delay-display">5.0秒</span></label>
+          <input type="range" id="batch-delay-slider" min="3000" max="15000" value="5000">
+          <span>(3秒 - 15秒)</span>
+        </div>
+        <div class="setting-item">
+          <label for="batch-size-select">每批次處理數量:</label>
+          <select id="batch-size-select">
+            <option value="3">3個館 (較安全)</option>
+            <option value="5" selected>5個館 (推薦)</option>
+            <option value="8">8個館 (稍快)</option>
+            <option value="10">10個館 (快速但風險增加)</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="findbook-area" id="detailed-search-section" style="display:none;">
+        <h2>5. 圖書館藏查詢進度與結果</h2>
+        <div class="findbook-controls" style="margin-bottom:15px;">
+            <button id="pause-resume-button" class="action-button pause-button">暫停搜尋</button>
+            <button id="cancel-search-button" class="action-button cancel-button">取消搜尋</button>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar">0/0</div>
+        </div>
+        <div class="status-info">
+            <div>📊 狀態: <span id="status-message">待機中</span></div>
+            <div>⏳ 目前批次: <span id="current-batch-info">-</span> / <span id="total-batch-info">-</span></div>
+            <div>✅ 成功: <span id="success-count">0</span> | ❌ 失敗: <span id="failed-count">0</span> | 🔄 已處理: <span id="processed-count">0</span>/<span id="total-count">0</span></div>
+        </div>
+        <div id="detailed-findbook-results">查詢結果將顯示於此</div>
+    </section>
+  </div>
+
+  <footer>
+    <p>© 2024 Hyread 多館查詢 Pro (v5). 改良版。</p>
+  </footer>
+
+  <script>
+    // Global variables
+    let selectedHyreadUrls = [];
+    let isDetailedSearching = false;
+    let isPaused = false;
+    let currentSearchAbortController = null; 
+    
+    let successfulRequests = 0;
+    let failedRequests = 0;
+    let processedLibsCount = 0;
+    let totalLibsToQuery = 0;
+    let currentBatchNum = 0;
+    let totalBatchesNum = 0;
+
+    const delayConfig = {
+      base: 1000,
+      random: 500,
+      batchDelay: 5000,
+      errorMultiplier: 1.5 
+    };
+
+    // =======================================================================
+    // == 請確保您提供的 libraryDataFull 物件內容正確且是圖書館的基礎 URL ==
+    // =======================================================================
+    const libraryDataFull = {
+        "北部地區": [
+            ["https://tpml.ebook.hyread.com.tw", "台北市立圖書館"],
+            ["https://tphcc.ebook.hyread.com.tw", "新北市立圖書館"],
+            ["https://klccab.ebook.hyread.com.tw", "基隆市文化局"],
+            ["https://tycccgov.ebook.hyread.com.tw", "桃園市立圖書館"],
+            ["https://hcmlgov.ebook.hyread.com.tw", "新竹市圖書館"],
+            ["https://hchcc.ebook.hyread.com.tw", "新竹縣公共圖書館"],
+            ["https://ilccb.ebook.hyread.com.tw", "宜蘭縣政府文化局"],
+        ],
+        "中部地區": [
+            ["https://taichunggov.ebook.hyread.com.tw", "臺中市立圖書館"],
+            ["https://bocach.ebook.hyread.com.tw", "彰化縣公共圖書館"],
+            ["https://chcedu.ebook.hyread.com.tw", "彰化雲端電子書庫"],
+            ["https://nthccgov.ebook.hyread.com.tw", "南投縣公共圖書館"], 
+            ["https://ylccb.ebook.hyread.com.tw", "雲林縣公共圖書館"],
+        ],
+        "南部地區": [
+            ["https://cabcygov.ebook.hyread.com.tw", "嘉義市政府文化局"],
+            ["https://cycabgov.ebook.hyread.com.tw", "嘉義縣公共圖書館"],
+            ["https://tnml.ebook.hyread.com.tw", "臺南市立圖書館"],
+            ["https://ksml.ebook.hyread.com.tw", "高雄市立圖書館"],
+            ["https://pthggov.ebook.hyread.com.tw", "屏東縣公共圖書館"],
+        ],
+        "東部地區": [
+            ["https://hccc.ebook.hyread.com.tw", "花蓮縣文化局"],
+            ["https://jianlib.ebook.hyread.com.tw", "花蓮縣吉安鄉立圖書館"],
+            ["https://hualienlib.ebook.hyread.com.tw", "花蓮縣花蓮市立圖書館"],
+            ["https://shlinlib.ebook.hyread.com.tw", "秀林鄉立圖書館"],
+            ["https://sinchenlib.ebook.hyread.com.tw", "新城鄉立圖書館"],
+            ["https://cclttct.ebook.hyread.com.tw", "臺東縣政府文化處"],
+        ],
+        "離島地區": [
+            ["https://phhcc.ebook.hyread.com.tw", "澎湖縣圖書館"],
+            ["https://kinmen.ebook.hyread.com.tw", "金門縣文化局"],
+            ["https://lieyu.ebook.hyread.com.tw", "金門縣烈嶼鄉公所"],
+            ["https://matsucc.ebook.hyread.com.tw", "連江縣公共圖書館"],
+        ],
+        "苗栗地區": [
+            ["https://miaolilib.ebook.hyread.com.tw", "苗栗縣立圖書館"],
+            ["https://mlcg.ebook.hyread.com.tw", "苗栗市立圖書館"],
+            ["https://sanwan.ebook.hyread.com.tw", "苗栗縣三灣鄉立圖書館"],
+            ["https://dahu.ebook.hyread.com.tw", "苗栗縣大湖鄉立圖書館"],
+            ["https://gungguan.ebook.hyread.com.tw", "苗栗縣公館鄉立圖書館"],
+            ["https://xihu.ebook.hyread.com.tw", "苗栗縣西湖鄉立圖書館"],
+            ["https://nanchuang.ebook.hyread.com.tw", "苗栗縣南庄鄉立圖書館"],
+            ["https://houlong.ebook.hyread.com.tw", "苗栗縣後龍鎮立圖書館"],
+            ["https://yuanli.ebook.hyread.com.tw", "苗栗縣苑裡鎮立圖書館"],
+            ["https://tungshiau.ebook.hyread.com.tw", "苗栗縣通霄鎮立圖書館"],
+            ["https://zaociao.ebook.hyread.com.tw", "苗栗縣造橋鄉立圖書館"],
+            ["https://stan.ebook.hyread.com.tw", "苗栗縣獅潭鄉圖書館"],
+            ["https://toufenlib.ebook.hyread.com.tw", "苗栗縣頭份市立圖書館"],
+            ["https://touwu.ebook.hyread.com.tw", "苗栗縣頭屋鄉立圖書館"],
+        ],
+        "國立與其他": [
+            ["https://ncl.ebook.hyread.com.tw", "國家圖書館"],
+            ["https://ebook.nlpi.edu.tw", "國立公共資訊圖書館"], 
+            ["https://ntledu.ebook.hyread.com.tw", "國立臺灣圖書館"],
+            ["https://ncltrccs.ebook.hyread.com.tw", "國家圖書館臺灣漢學資源中心"], 
+            ["https://hsinrong.ebook.hyread.com.tw", "欣榮紀念圖書館"],
+        ]
+    };
+    // =======================================================================
+
+    let allLibraryUrlsFlat = Object.values(libraryDataFull).flat();
+
+    const $id = (id) => document.getElementById(id);
+    const $qs = (selector) => document.querySelector(selector);
+    const $qsa = (selector) => document.querySelectorAll(selector);
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    // User-Agent 設定
+    const fixedUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
+    const randomUserAgents = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:95.0) Gecko/20100101 Firefox/95.0',
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36'
+    ];
+    // 當前使用的 User-Agent 策略 (true: 固定, false: 隨機)
+    const useFixedUserAgent = true; 
+
+    function getUserAgent() {
+        if (useFixedUserAgent) {
+            return fixedUserAgent;
+        } else {
+            return randomUserAgents[Math.floor(Math.random() * randomUserAgents.length)];
+        }
+    }
+
+
+    function getDynamicDelay() {
+      let currentBaseDelay = delayConfig.base;
+      if (failedRequests > successfulRequests / 2 && failedRequests > 3) { 
+          currentBaseDelay = Math.min(delayConfig.base * delayConfig.errorMultiplier, 7000); 
+      }
+      const randomDelay = Math.random() * delayConfig.random;
+      return currentBaseDelay + randomDelay;
+    }
+    
+    function updateDelayDisplays() {
+        $id("current-delay-display").textContent = (delayConfig.base / 1000).toFixed(1) + "秒";
+        $id("batch-delay-display").textContent = (delayConfig.batchDelay / 1000).toFixed(1) + "秒";
+    }
+
+    function updateSelectedLibCount() {
+        selectedHyreadUrls = Array.from($qsa('input[name="library-url"]:checked')).map(cb => cb.value);
+        $id("selected-lib-count").textContent = selectedHyreadUrls.length;
+    }
+
+    function saveCheckboxStates() {
+        $qsa('input[name="library-url"]').forEach(checkbox => {
+            localStorage.setItem("checkbox-" + checkbox.id, checkbox.checked);
+        });
+        localStorage.setItem("selectAllLibraries", $id("select-all-libraries").checked);
+    }
+
+    function loadCheckboxStates() {
+        let hasSavedState = false;
+        $qsa('input[name="library-url"]').forEach(checkbox => {
+            const storedState = localStorage.getItem("checkbox-" + checkbox.id);
+            if (storedState !== null) {
+                checkbox.checked = storedState === "true";
+                hasSavedState = true;
+            }
+        });
+        
+        if (hasSavedState) {
+            const selectAllState = localStorage.getItem("selectAllLibraries");
+             if (selectAllState !== null) $id("select-all-libraries").checked = selectAllState === "true";
+        } else {
+            const defaultLibs = ["https://tpml.ebook.hyread.com.tw", "https://tphcc.ebook.hyread.com.tw", "https://ebook.nlpi.edu.tw", "https://taichunggov.ebook.hyread.com.tw", "https://ksml.ebook.hyread.com.tw"];
+            $qsa('input[name="library-url"]').forEach(cb => {
+                const cleanedCBValue = cb.value.endsWith('/') ? cb.value.slice(0, -1) : cb.value;
+                if (defaultLibs.includes(cleanedCBValue)) cb.checked = true;
             });
+            $id("select-all-libraries").checked = false; 
+        }
+        updateSelectedLibCount();
+        filterLibraries(); 
+    }
+    
+    function createLibraryCheckboxes() {
+        const container = $id("library-checkboxes-container");
+        container.innerHTML = ''; 
+        let checkboxIndex = 0;
+
+        allLibraryUrlsFlat = []; // 重置並從 libraryDataFull 重新生成
+
+        for (const groupName in libraryDataFull) {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'library-group';
             
-            // 預設選擇主要館
-            selectMajor();
-        }
+            const groupTitle = document.createElement('h4');
+            groupTitle.textContent = groupName;
+            groupDiv.appendChild(groupTitle);
 
-        // 更新選中的圖書館
-        function updateSelectedLibraries() {
-            selectedLibraries = [];
-            const checkboxes = document.querySelectorAll('.library-checkbox:checked');
-            checkboxes.forEach(checkbox => {
-                selectedLibraries.push(checkbox.value);
+            libraryDataFull[groupName].forEach(lib => {
+                let url = lib[0];
+                const name = lib[1];
+                const id = `lib-cb-${checkboxIndex++}`;
+
+                // 清理 URL 並更新 allLibraryUrlsFlat
+                const cleanedUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+                allLibraryUrlsFlat.push([cleanedUrl, name]);
+
+
+                const label = document.createElement("label");
+                label.setAttribute("for", id);
+                label.title = cleanedUrl; 
+
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.name = "library-url";
+                checkbox.value = cleanedUrl; 
+                checkbox.id = id;
+                checkbox.addEventListener("change", () => {
+                    updateSelectedLibCount();
+                    saveCheckboxStates(); 
+                    updateSelectAllCheckboxState();
+                });
+
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(name));
+                groupDiv.appendChild(label);
             });
+            container.appendChild(groupDiv);
+        }
+        // 確保 allLibraryUrlsFlat 中的 URL 都是唯一的 (如果 libraryDataFull 中可能有重複)
+        // 這一步通常在數據源頭保證唯一性更好
+        allLibraryUrlsFlat = [...new Map(allLibraryUrlsFlat.map(item => [item[0], item])).values()];
+
+        loadCheckboxStates();
+    }
+    
+    function updateSelectAllCheckboxState() {
+        const allVisibleCheckboxes = Array.from($qsa('input[name="library-url"]'))
+                                       .filter(cb => cb.parentElement.style.display !== 'none');
+        const allVisibleChecked = allVisibleCheckboxes.every(cb => cb.checked);
+        $id("select-all-libraries").checked = allVisibleCheckboxes.length > 0 && allVisibleChecked;
+    }
+
+
+    function filterLibraries() {
+        const filterText = $id("library-filter-input").value.toLowerCase();
+        $qsa('#library-checkboxes-container label').forEach(label => {
+            const libName = label.textContent.toLowerCase();
+            if (libName.includes(filterText)) {
+                label.style.display = 'flex';
+            } else {
+                label.style.display = 'none';
+            }
+        });
+        updateSelectAllCheckboxState();
+    }
+
+    function updateDetailedSearchProgress(processed, total) {
+        const percentage = total > 0 ? (processed / total) * 100 : 0;
+        const progressBar = $qs(".progress-bar");
+        progressBar.style.width = percentage + '%';
+        progressBar.textContent = `${processed}/${total}`;
+        $id("processed-count").textContent = processed;
+        $id("total-count").textContent = total;
+    }
+
+    function updateStatusInfo(message) {
+        $id("status-message").textContent = message;
+        $id("success-count").textContent = successfulRequests;
+        $id("failed-count").textContent = failedRequests;
+        $id("current-batch-info").textContent = currentBatchNum;
+        $id("total-batch-info").textContent = totalBatchesNum;
+    }
+
+    function resetDetailedSearchUI(isNewSearch = true) {
+        successfulRequests = 0;
+        failedRequests = 0;
+        processedLibsCount = 0;
+        currentBatchNum = 0;
+        totalBatchesNum = 0;
+        updateDetailedSearchProgress(0, 0);
+        if (isNewSearch) {
+            $id("detailed-findbook-results").innerHTML = '查詢結果將顯示於此...';
+        }
+        updateStatusInfo("待機中");
+        $id("pause-resume-button").textContent = "暫停搜尋";
+        $id("pause-resume-button").disabled = true; 
+        $id("cancel-search-button").disabled = true; 
+        isPaused = false;
+    }
+
+    async function performInitialBookSearch() {
+        const bookName = $id("book-name-input").value.trim();
+        if (!bookName) {
+            alert("請輸入書名關鍵字。");
+            return;
         }
 
-        // 全選
-        function selectAll() {
-            const checkboxes = document.querySelectorAll('.library-checkbox');
-            checkboxes.forEach(checkbox => checkbox.checked = true);
-            updateSelectedLibraries();
-        }
+        $id("initial-search-button").disabled = true;
+        $id("initial-search-button").textContent = "搜尋中...";
+        $id("initial-results-section").style.display = 'block';
+        $id("initial-results").innerHTML = '<p>正在向 Hyread 主站查詢書名，請稍候...</p>';
 
-        // 清除選擇
-        function selectNone() {
-            const checkboxes = document.querySelectorAll('.library-checkbox');
-            checkboxes.forEach(checkbox => checkbox.checked = false);
-            updateSelectedLibraries();
-        }
+        const searchUrl = `https://ebook.hyread.com.tw/searchList.jsp?search_field=FullText&search_input=${encodeURIComponent(bookName)}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort("Initial search timeout"), 20000);
 
-        // 選擇主要館
-        function selectMajor() {
-            const checkboxes = document.querySelectorAll('.library-checkbox');
-            checkboxes.forEach((checkbox, index) => {
-                checkbox.checked = libraries[index][2] === 'major';
+        try {
+            // 使用 $.ajax 進行第一階段搜尋，因為 HBSearch4.html 中此部分在 Safari 似乎可行
+             const data = await $.ajax({
+                url: searchUrl,
+                method: 'GET', // 明確指定 GET
+                timeout: 15000, // jQuery timeout
+                // jQuery 的 AbortController 處理方式不同，這裡使用其內建的 timeout
+                // 如果要與 fetch 的 AbortController 結合，需要更複雜的包裝
+                // 為了簡單起見，這裡依賴 jQuery 的 timeout
+                // Safari 的問題主要在第二階段的 fetch，所以第一階段用 jQuery 應可接受
             });
-            updateSelectedLibraries();
-        }
 
-        // 選擇地方館
-        function selectLocal() {
-            const checkboxes = document.querySelectorAll('.library-checkbox');
-            checkboxes.forEach((checkbox, index) => {
-                checkbox.checked = libraries[index][2] === 'local';
-            });
-            updateSelectedLibraries();
-        }
+            clearTimeout(timeoutId); // 如果 $.ajax 成功，清除 fetch 的 timeout (雖然這裡沒直接用 fetch)
 
-        // 搜尋書籍
-        function searchBooks() {
-            const bookName = document.getElementById('book-name').value.trim();
-            if (!bookName) {
-                alert('請輸入書名');
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(data, "text/html"); // jQuery 返回的是字串，需手動解析
+            
+            const bookItems = doc.querySelectorAll('div.book-title-01');
+            if (bookItems.length === 0) {
+                $id("initial-results").innerHTML = `<p>在 Hyread 主站未找到符合「${bookName}」的書籍。請嘗試其他關鍵字。</p>`;
                 return;
             }
-            
-            if (selectedLibraries.length === 0) {
-                alert('請至少選擇一個圖書館');
-                return;
-            }
 
-            if (isSearching) return;
-            
-            isSearching = true;
-            updateSearchUI(true);
-            
-            const bookNameUrl = `https://ebook.hyread.com.tw/searchList.jsp?search_field=FullText&search_input=${encodeURIComponent(bookName)}`;
-            
-            $.ajax({
-                url: bookNameUrl,
-                timeout: 15000,
-                success: function(data) {
-                    const soup = $(data);
-                    const bookTitles = soup.find('div.book-title-01');
-                    displaySearchResults(bookTitles);
-                },
-                error: function(error) {
-                    document.getElementById('search-results').innerHTML = 
-                        '<div class="no-results">搜尋發生錯誤，請稍後再試</div>';
-                    updateSearchUI(false);
+            let resultsHtml = '';
+            bookItems.forEach((item, index) => {
+                const linkElement = item.querySelector('a');
+                if (linkElement) {
+                    const title = linkElement.textContent.trim();
+                    const href = linkElement.getAttribute('href');
+                    const bookIdMatch = href ? href.match(/id=(\d+)/) : null;
+                    if (bookIdMatch) {
+                        const bookId = bookIdMatch[1];
+                        resultsHtml += `
+                            <div class="result-item">
+                                <span>${title.replace(/</g, "<").replace(/>/g, ">")}</span>
+                                <button class="action-button" onclick="startDetailedBookSearchWrapper('${bookId}', '${title.replace(/'/g, "\\'").replace(/"/g, """)}')">查詢此書在各館情況</button>
+                            </div>`;
+                    }
                 }
             });
-        }
+            $id("initial-results").innerHTML = resultsHtml || '<p>無法解析搜尋結果，或結果中無有效書籍ID。</p>';
 
-        // 顯示搜尋結果
-        function displaySearchResults(bookTitles) {
-            const resultsDiv = document.getElementById('search-results');
-            resultsDiv.innerHTML = '';
+        } catch (jqXHR_or_error) { // jQuery 錯誤處理
+            clearTimeout(timeoutId);
+            console.error("Initial book search failed:", jqXHR_or_error);
+            let errorMsg = '查詢 Hyread 主站時發生錯誤。';
             
-            if (bookTitles.length === 0) {
-                resultsDiv.innerHTML = '<div class="no-results">找不到相關書籍</div>';
-                updateSearchUI(false);
-                return;
-            }
-
-            bookTitles.each(function(index) {
-                const bookUrl = $(this).find('a');
-                const bookTitle = bookUrl.text();
-                const bookHref = bookUrl.attr('href');
-                
-                const bookItem = document.createElement('div');
-                bookItem.className = 'book-item';
-                bookItem.innerHTML = `
-                    <div class="book-title">${bookTitle}</div>
-                    <button class="find-btn" onclick="findInLibraries('${bookHref}', '${bookTitle.replace(/'/g, "\\'")}')">
-                        查詢館藏
-                    </button>
-                `;
-                resultsDiv.appendChild(bookItem);
-            });
-            
-            document.getElementById('results-section').style.display = 'block';
-            updateSearchUI(false);
-        }
-
-        // 在圖書館中查詢
-        async function findInLibraries(bookHref, bookTitle) {
-            const resultsDiv = document.getElementById('library-results');
-            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>正在查詢各館館藏...</div>';
-            
-            const bookId = bookHref.match(/id=(\d+)/)[1];
-            let searchedCount = 0;
-            let foundCount = 0;
-            
-            // 顯示進度
-            document.getElementById('search-stats').style.display = 'flex';
-            document.getElementById('progress-bar').style.display = 'block';
-            
-            const results = [];
-            const batchSize = 5; // 每批處理5個請求
-            
-            // 分批處理請求以避免被封鎖
-            for (let i = 0; i < selectedLibraries.length; i += batchSize) {
-                const batch = selectedLibraries.slice(i, i + batchSize);
-                const batchPromises = batch.map(async (url, batchIndex) => {
-                    try {
-                        // 隨機延遲 100-300ms
-                        await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
-                        
-                        const api = `${url}/bookDetail.jsp?id=${bookId}`;
-                        const response = await fetch(api, {
-                            headers: {
-                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                            },
-                            timeout: 8000
-                        });
-                        
-                        const text = await response.text();
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(text, 'text/html');
-                        
-                        searchedCount++;
-                        updateProgress(searchedCount, selectedLibraries.length);
-                        
-                        // 檢查是否有書
-                        if (doc.querySelector('img[src="/Template/RWD3.0/images/nosale2_pic.png"]')) {
-                            return null;
-                        }
-                        
-                        const libraryName = getLibraryName(url);
-                        const bookHits = doc.querySelector('.date');
-                        const myStateButton = doc.querySelector('#myStateButton');
-                        const collection = doc.querySelector('#Collection') || doc.querySelector('#combineSite0');
-                        
-                        if (myStateButton) {
-                            foundCount++;
-                            document.getElementById('found-count').textContent = foundCount;
-                            
-                            return {
-                                libraryName,
-                                url: api,
-                                hits: bookHits ? bookHits.textContent : '',
-                                status: collection ? collection.textContent : myStateButton.textContent,
-                                type: myStateButton.textContent
-                            };
-                        }
-                        
-                        return null;
-                    } catch (error) {
-                        searchedCount++;
-                        updateProgress(searchedCount, selectedLibraries.length);
-                        console.error(`Error searching ${url}:`, error);
-                        return null;
-                    }
-                });
-                
-                const batchResults = await Promise.all(batchPromises);
-                results.push(...batchResults.filter(result => result !== null));
-                
-                // 即時顯示結果
-                displayLibraryResults(results);
-            }
-            
-            // 隱藏進度條
-            setTimeout(() => {
-                document.getElementById('progress-bar').style.display = 'none';
-                document.getElementById('search-stats').style.display = 'none';
-            }, 1000);
-        }
-
-        // 更新進度
-        function updateProgress(current, total) {
-            const percentage = (current / total) * 100;
-            document.getElementById('progress-fill').style.width = `${percentage}%`;
-            document.getElementById('searched-count').textContent = current;
-        }
-
-        // 顯示圖書館結果
-        function displayLibraryResults(results) {
-            const resultsDiv = document.getElementById('library-results');
-            
-            if (results.length === 0) {
-                resultsDiv.innerHTML = '<div class="no-results">所選圖書館均無此書籍</div>';
-                return;
-            }
-            
-            resultsDiv.innerHTML = '';
-            results.forEach(result => {
-                const resultItem = document.createElement('div');
-                resultItem.className = 'library-result';
-                resultItem.innerHTML = `
-                    <div class="library-name-result">${result.libraryName}</div>
-                    <div class="book-status">狀態: ${result.status}</div>
-                    ${result.hits ? `<div class="book-status">人氣: ${result.hits}</div>` : ''}
-                    <a href="${result.url}" target="_blank" class="book-link">查看詳情 →</a>
-                `;
-                resultsDiv.appendChild(resultItem);
-            });
-        }
-
-        // 獲取圖書館名稱
-        function getLibraryName(url) {
-            const library = libraries.find(lib => lib[0] === url);
-            return library ? library[1] : url;
-        }
-
-        // 更新搜尋UI狀態
-        function updateSearchUI(searching) {
-            const button = document.getElementById('search-button');
-            const buttonText = button.querySelector('.btn-text');
-            
-            if (searching) {
-                button.disabled = true;
-                buttonText.innerHTML = '<div class="spinner"></div>搜尋中...';
+            if (jqXHR_or_error.statusText === 'timeout') { // jQuery timeout
+                 errorMsg += ' 請求超時。';
+            } else if (jqXHR_or_error.statusText && jqXHR_or_error.status) { // jQuery AJAX error object
+                errorMsg += ` (HTTP ${jqXHR_or_error.status}: ${jqXHR_or_error.statusText}).`;
+            } else if (jqXHR_or_error.name === 'AbortError') { // fetch AbortError
+                 errorMsg += ' 請求超時或被取消。';
+            } else if (jqXHR_or_error.message && jqXHR_or_error.message.includes('Failed to fetch')){ // fetch network error
+                errorMsg += ' 網路連線失敗。';
             } else {
-                button.disabled = false;
-                buttonText.textContent = '開始搜尋';
-                isSearching = false;
+                errorMsg += ' 未知錯誤。';
             }
+
+            if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
+                $id("safari-warning-placeholder").style.display = 'block';
+            }
+            $id("initial-results").innerHTML = `<p style="color:red;">${errorMsg}</p>`;
+        } finally {
+            $id("initial-search-button").disabled = false;
+            $id("initial-search-button").textContent = "搜尋書名";
+        }
+    }
+    
+    window.startDetailedBookSearchWrapper = (bookId, bookTitle) => {
+        startDetailedBookSearch(bookId, bookTitle).catch(err => {
+            console.error("Error starting detailed search:", err);
+            updateStatusInfo("啟動詳細搜尋時發生錯誤。");
+        });
+    };
+
+    async function startDetailedBookSearch(bookId, bookTitle) {
+        if (isDetailedSearching) {
+            alert("目前尚有查詢任務進行中，請等待完成或取消後再試。");
+            return;
+        }
+        if (selectedHyreadUrls.length === 0) {
+            alert("請至少選擇一個圖書館進行查詢。");
+            return;
         }
 
-        // 事件監聽器
-        document.getElementById('search-button').addEventListener('click', searchBooks);
-        document.getElementById('book-name').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchBooks();
+        $id("detailed-search-section").style.display = 'block';
+        $id('detailed-search-section').scrollIntoView({ behavior: 'smooth' });
+        resetDetailedSearchUI(true);
+        
+        isDetailedSearching = true;
+        isPaused = false;
+        currentSearchAbortController = new AbortController();
+        $id("pause-resume-button").disabled = false;
+        $id("cancel-search-button").disabled = false;
+
+
+        updateStatusInfo(`開始查詢「${bookTitle.replace(/</g, "<").replace(/>/g, ">")}」在 ${selectedHyreadUrls.length} 個圖書館的情況...`);
+
+        const batchSize = parseInt($id("batch-size-select").value);
+        const batches = [];
+        for (let i = 0; i < selectedHyreadUrls.length; i += batchSize) {
+            batches.push(selectedHyreadUrls.slice(i, i + batchSize));
+        }
+        totalBatchesNum = batches.length;
+        totalLibsToQuery = selectedHyreadUrls.length;
+        updateDetailedSearchProgress(0, totalLibsToQuery);
+
+        let allResultsHtmlPieces = []; 
+
+        for (let i = 0; i < batches.length; i++) {
+            if (currentSearchAbortController.signal.aborted) {
+                updateStatusInfo("查詢已取消。");
+                break;
+            }
+            while (isPaused && !currentSearchAbortController.signal.aborted) { 
+                 updateStatusInfo(`查詢已暫停。批次 ${currentBatchNum+1 > totalBatchesNum ? totalBatchesNum : currentBatchNum+1 }/${totalBatchesNum} 等待中...`);
+                await delay(1000);
+            }
+            if (currentSearchAbortController.signal.aborted) break;
+
+            currentBatchNum = i + 1;
+            updateStatusInfo(`處理第 ${currentBatchNum}/${totalBatchesNum} 批次...`);
+            
+            const batchUrls = batches[i];
+            const batchPromises = batchUrls.map(libUrl => 
+                querySingleLibrary(libUrl, bookId, currentSearchAbortController.signal)
+            );
+            
+            const batchResults = await Promise.all(batchPromises);
+            
+            if ($id("detailed-findbook-results").innerHTML.startsWith('查詢結果將顯示於此')) {
+                $id("detailed-findbook-results").innerHTML = ''; 
+            }
+
+            batchResults.forEach(result => {
+                if (currentSearchAbortController.signal.aborted) return; 
+                if (result) {
+                    allResultsHtmlPieces.push(result); 
+                    $id("detailed-findbook-results").insertAdjacentHTML('beforeend', result); 
+                }
+                processedLibsCount++; 
+                updateDetailedSearchProgress(processedLibsCount, totalLibsToQuery);
+            });
+
+            if (currentSearchAbortController.signal.aborted) break;
+            updateStatusInfo(`第 ${currentBatchNum}/${totalBatchesNum} 批次完成。`);
+
+            if (i < batches.length - 1 && !currentSearchAbortController.signal.aborted) {
+                const batchDelayMs = delayConfig.batchDelay;
+                updateStatusInfo(`批次間休息 ${(batchDelayMs / 1000).toFixed(1)} 秒...`);
+                
+                for (let t = 0; t < batchDelayMs; t += 500) { 
+                    if (currentSearchAbortController.signal.aborted) break;
+                    await delay(Math.min(500, batchDelayMs - t));
+                }
+            }
+             if (currentSearchAbortController.signal.aborted) break;
+        }
+
+        if (allResultsHtmlPieces.length === 0 && !currentSearchAbortController.signal.aborted) {
+            $id("detailed-findbook-results").innerHTML = `<p>在所選圖書館中均未找到「${bookTitle.replace(/</g, "<").replace(/>/g, ">")}」，或所有請求均失敗。</p>`;
+        } else if (currentSearchAbortController.signal.aborted) {
+             $id("detailed-findbook-results").innerHTML += `<p style="color:red; font-weight:bold;">查詢已取消。</p>`; 
+        }
+        
+        if (!currentSearchAbortController.signal.aborted) {
+            updateStatusInfo(`所有圖書館查詢完成！共找到 ${successfulRequests} 筆有效結果。`);
+        }
+        isDetailedSearching = false;
+        $id("pause-resume-button").disabled = true;
+        $id("cancel-search-button").disabled = true;
+    }
+    
+    async function querySingleLibrary(libraryBaseUrl, bookId, mainAbortSignal) {
+        // 確保 libraryBaseUrl 末尾沒有斜線
+        const cleanedBaseUrl = libraryBaseUrl.endsWith('/') ? libraryBaseUrl.slice(0, -1) : libraryBaseUrl;
+        
+        // 使用你原始程式碼中成功的 URL 結構
+        const apiUrl = `${cleanedBaseUrl}/${bookId}`; 
+        console.log("Attempting to query (Stage 2):", apiUrl);
+
+        const dynamicReqDelay = getDynamicDelay();
+        await delay(dynamicReqDelay);
+        updateDelayDisplays(); 
+
+        const requestTimeoutController = new AbortController();
+        const timeoutId = setTimeout(() => requestTimeoutController.abort('timeout'), 25000); 
+
+        let combinedSignal;
+        if (typeof AbortSignal.any === 'function') {
+            combinedSignal = AbortSignal.any([mainAbortSignal, requestTimeoutController.signal]);
+        } else {
+            combinedSignal = requestTimeoutController.signal; 
+            const mainAbortListener = () => requestTimeoutController.abort('mainAbort');
+            mainAbortSignal.addEventListener('abort', mainAbortListener, { once: true });
+            combinedSignal.addEventListener('abort', () => mainAbortSignal.removeEventListener('abort', mainAbortListener), { once: true });
+        }
+
+        const fetchOptions = {
+            headers: {
+                'User-Agent': getUserAgent(), // 使用上面定義的 getUserAgent 函數
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            },
+            signal: combinedSignal,
+        };
+
+        try {
+            const response = await fetch(apiUrl, fetchOptions);
+            clearTimeout(timeoutId); 
+            if (mainAbortSignal.aborted) return null; 
+
+            if (!response.ok) {
+                console.warn(`HTTP error ${response.status} for ${apiUrl}. This library might not have the book or uses a different URL structure. Status: ${response.statusText}`);
+                failedRequests++;
+                return null; 
+            }
+            const responseText = await response.text();
+            if (mainAbortSignal.aborted) return null;
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(responseText, "text/html");
+
+            if (doc.querySelector('img[src="/Template/RWD3.0/images/nosale2_pic.png"], img[alt="本館無此書"]')) {
+                return null; 
+            }
+
+            const bookTitleElem = doc.querySelector('h3.book-title-01, div.SubsectShw-H01 h3, h3#bookTitle, meta[property="og:title"]');
+            const myStateButton = doc.querySelector('#myStateButton, a.btnTypeA_ MeternewGray'); 
+            
+            let bookActualTitle = "書名未知";
+            if(bookTitleElem){
+                bookActualTitle = (bookTitleElem.tagName === 'META' ? bookTitleElem.getAttribute('content') : bookTitleElem.textContent).trim();
+                if (bookTitleElem.tagName === 'META') {
+                    let parts = bookActualTitle.split(/[-–—]\s*HyRead|@|\|/); 
+                    bookActualTitle = parts[0].trim();
+                }
+            }
+
+            if (!myStateButton) {
+                const notFoundMessages = ["查無此書", "書籍不存在", "無法提供"];
+                if (notFoundMessages.some(msg => doc.body.textContent.includes(msg))) {
+                    return null;
+                }
+                // 檢查是否有一個明確的“找不到書籍”的 div 或訊息
+                const errorDiv = doc.querySelector('.error_page_content, .error-message-class'); // 假設的 class
+                if (errorDiv && errorDiv.textContent.includes("找不到")) {
+                    return null;
+                }
+
+                console.warn(`Could not find state button for ${apiUrl}. Title found: ${bookActualTitle}. Might be an error page or different layout.`);
+                if (!bookTitleElem && !doc.querySelector('.SubsectShw-H01')) return null;
+            }
+
+            // 查找原始的 libraryName (使用 cleanedBaseUrl 進行匹配)
+            let libraryName = "未知圖書館";
+            const foundLibEntry = allLibraryUrlsFlat.find(lib => lib[0] === cleanedBaseUrl);
+            if (foundLibEntry) {
+                libraryName = foundLibEntry[1];
+            } else {
+                console.warn(`Could not find library name for base URL: ${cleanedBaseUrl}`);
+                libraryName = cleanedBaseUrl; // Fallback to URL if name not found
+            }
+            
+            let buttonText = myStateButton ? myStateButton.textContent.trim() : "狀態未知";
+            let statusText = "";
+
+            if (buttonText.includes("計次服務") || (myStateButton && myStateButton.href && myStateButton.href.includes("meter"))) {
+                buttonText = `計次服務`;
+            }
+            
+            const collectionElem = doc.querySelector('#Collection, #combineSite0, .SubsectShw-H04'); 
+            if (collectionElem) {
+                statusText = collectionElem.textContent.trim().replace(/\s+/g, ' '); 
+            }
+            
+            const hitsElem = doc.querySelector('.date, .book-data .hits, .SubsectShw-H03 span'); 
+            let hitsText = "";
+            if(hitsElem) {
+                const rawHits = hitsElem.textContent.match(/\d+/); 
+                if(rawHits) hitsText = `[人氣 ${rawHits[0]}]`;
+            }
+
+            successfulRequests++;
+            return `
+                <div class="book-entry">
+                    <strong><a href="${apiUrl}" target="_blank">${bookActualTitle.replace(/</g, "<").replace(/>/g, ">")}</a></strong> ${hitsText}<br>
+                    圖書館: ${libraryName.replace(/</g, "<").replace(/>/g, ">")}<br>
+                    按鈕狀態: ${buttonText.replace(/</g, "<").replace(/>/g, ">")}<br>
+                    ${statusText ? `館藏狀態: ${statusText.replace(/</g, "<").replace(/>/g, ">")}<br>` : ''}
+                </div>`;
+
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (combinedSignal.aborted) { 
+                if (combinedSignal.reason === 'timeout') {
+                    console.warn(`Request timed out: ${apiUrl}`);
+                    failedRequests++;
+                } else if (combinedSignal.reason === 'mainAbort' || mainAbortSignal.aborted) {
+                     console.log(`Request cancelled by user: ${apiUrl}`);
+                } else {
+                    console.log(`Request aborted (${combinedSignal.reason || 'unknown reason'}): ${apiUrl}`);
+                    if(combinedSignal.reason !== 'mainAbort') failedRequests++;
+                }
+            } else {
+                console.error(`Failed to query ${apiUrl}:`, error);
+                failedRequests++;
+                 if (error instanceof TypeError && error.message.toLowerCase().includes('failed to fetch')) {
+                    console.warn(`[CORS_ERROR_STAGE_2] Request to ${apiUrl} was blocked by CORS policy. Origin: ${window.location.origin}. Error: ${error.message}`);
+                }
+                if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
+                    $id("safari-warning-placeholder").style.display = 'block';
+                }
+            }
+            return null;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
+            $id("safari-warning-placeholder").style.display = 'block';
+        }
+        
+        createLibraryCheckboxes(); // 這會初始化 allLibraryUrlsFlat 並載入 checkbox 狀態
+        updateDelayDisplays();
+
+        $id("initial-search-button").addEventListener("click", performInitialBookSearch);
+        
+        $id("select-all-libraries").addEventListener("change", function() {
+            const isChecked = this.checked;
+            $qsa('input[name="library-url"]').forEach(checkbox => {
+                if (checkbox.parentElement.style.display !== 'none') { 
+                    checkbox.checked = isChecked;
+                }
+            });
+            updateSelectedLibCount();
+            saveCheckboxStates(); 
+        });
+
+        $id("library-filter-input").addEventListener("input", filterLibraries);
+
+        $id("delay-slider").addEventListener("input", (e) => {
+            delayConfig.base = parseInt(e.target.value);
+            updateDelayDisplays();
+        });
+        $id("batch-delay-slider").addEventListener("input", (e) => {
+            delayConfig.batchDelay = parseInt(e.target.value);
+            updateDelayDisplays();
+        });
+
+        $id("delay-slider").addEventListener("change", (e) => localStorage.setItem("delayBase", e.target.value));
+        $id("batch-delay-slider").addEventListener("change", (e) => localStorage.setItem("batchDelay", e.target.value));
+        $id("batch-size-select").addEventListener("change", (e) => localStorage.setItem("batchSize", e.target.value));
+
+        if(localStorage.getItem("delayBase")) {
+            $id("delay-slider").value = localStorage.getItem("delayBase");
+            delayConfig.base = parseInt($id("delay-slider").value);
+        }
+        if(localStorage.getItem("batchDelay")) {
+            $id("batch-delay-slider").value = localStorage.getItem("batchDelay");
+            delayConfig.batchDelay = parseInt($id("batch-delay-slider").value);
+        }
+        if(localStorage.getItem("batchSize")) {
+            $id("batch-size-select").value = localStorage.getItem("batchSize");
+        }
+        updateDelayDisplays();
+
+        $id("pause-resume-button").addEventListener("click", () => {
+            isPaused = !isPaused;
+            if (isPaused) {
+                $id("pause-resume-button").textContent = "繼續搜尋";
+                $id("pause-resume-button").classList.remove('pause-button'); 
+                updateStatusInfo(`查詢已暫停。等待繼續...`);
+            } else {
+                $id("pause-resume-button").textContent = "暫停搜尋";
+                $id("pause-resume-button").classList.add('pause-button');
             }
         });
 
-        // 初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            initLibraries();
+        $id("cancel-search-button").addEventListener("click", () => {
+            if (currentSearchAbortController && !currentSearchAbortController.signal.aborted) {
+                currentSearchAbortController.abort(); 
+            }
+            isDetailedSearching = false; 
+            isPaused = false;
+            $id("pause-resume-button").disabled = true;
+            $id("cancel-search-button").disabled = true;
+            updateStatusInfo("查詢已取消。");
         });
-    </script>
+        resetDetailedSearchUI(false); 
+    });
+  </script>
 </body>
 </html>
