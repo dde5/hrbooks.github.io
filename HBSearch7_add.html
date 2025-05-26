@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyread 電子書館藏查詢系統</title>
+	    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        .search-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .library-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .panel-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .library-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .control-btn:hover {
+            background: #f7fafc;
+            border-color: #667eea;
+        }
+
+        .control-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .library-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+        }
+
+        .library-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .library-item:hover {
+            background: #edf2f7;
+            transform: translateY(-1px);
+        }
+
+        .library-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .library-name {
+            font-size: 0.9rem;
+            color: #4a5568;
+            cursor: pointer;
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }
+
+        .search-results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .search-results {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        .result-panel {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .result-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+
+        .book-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .book-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .book-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .find-btn {
+            background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .find-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(56, 178, 172, 0.3);
+        }
+
+        .library-result {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #48bb78;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        .library-name-result {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .book-status {
+            color: #718096;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .book-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .book-link:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #718096;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+            font-size: 1.1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #718096;
+        }
+    </style>	
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Hyread 電子書館藏查詢</h1>
+            <p>搜尋全台 47 所圖書館的電子書館藏</p>
+        </div>
+
+        <!-- 新增：功能導航 -->
+        <nav class="function-nav">
+            <button class="nav-btn" onclick="navigateToSection('search-section')">
+                🔍 書籍搜尋
+            </button>
+            <button class="nav-btn" onclick="navigateToSection('history-section')">
+                📜 搜尋歷史
+            </button>
+            <button class="nav-btn" onclick="navigateToSection('results-section')">
+                📖 搜尋結果
+            </button>
+        </nav>
+
+        <div class="main-content">
+            <!-- 修改：為搜尋面板添加 ID -->
+            <div class="search-panel" id="search-section">
+                <div class="panel-title">
+                    🔍 書籍搜尋
+                </div>
+                
+                <!-- 新增：搜尋模式切換 -->
+                <div class="search-mode-tabs">
+                    <button class="mode-tab active" id="name-search-tab" onclick="switchSearchMode('name')">
+                        書名搜尋
+                    </button>
+                    <button class="mode-tab" id="id-search-tab" onclick="switchSearchMode('id')">
+                        ID搜尋
+                    </button>
+                </div>
+
+                <!-- 書名搜尋 -->
+                <div id="name-search-panel" class="search-input-panel">
+                    <input type="text" id="book-name" class="search-input" placeholder="請輸入書名...">
+                </div>
+
+                <!-- 新增：ID搜尋面板 -->
+                <div id="id-search-panel" class="search-input-panel" style="display: none;">
+                    <input type="text" id="book-id" class="search-input" placeholder="請輸入書籍ID (純數字)...">
+                    <input type="text" id="book-title-for-id" class="search-input" placeholder="書名 (可選，用於歷史記錄)...">
+                </div>
+
+                <button id="search-button" class="search-btn">
+                    <span class="btn-text">開始搜尋</span>
+                </button>
+                <div class="progress-bar" id="progress-bar" style="display: none;">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="stats" id="search-stats" style="display: none;">
+                    <span>已搜尋: <span id="searched-count">0</span></span>
+                    <span>找到: <span id="found-count">0</span></span>
+                </div>
+            </div>
+
+            <div class="library-panel">
+                <div class="panel-title">
+                    🏛️ 圖書館選擇
+                    <!-- 新增：顯示已選擇數量 -->
+                    <span class="selected-count" id="selected-library-count">(已選擇 0 個)</span>
+                </div>
+                <div class="library-controls">
+                    <button class="control-btn" onclick="selectAll()">全選</button>
+                    <button class="control-btn" onclick="selectNone()">清除</button>
+                    <button class="control-btn" onclick="selectMajor()">主要館</button>
+                    <button class="control-btn" onclick="selectLocal()">地方館</button>
+                    <button class="control-btn" onclick="saveSelectedLibraries()">儲存自選</button>
+                    <button class="control-btn" onclick="loadSelectedLibraries()">載入自選</button>
+                    <!-- 新增：匯入匯出按鈕 -->
+                    <button class="control-btn" onclick="exportLibrarySelection()">匯出自選</button>
+                    <input type="file" id="import-library-file" accept=".json" style="display: none;" onchange="importLibrarySelection(event)">
+                    <button class="control-btn" onclick="document.getElementById('import-library-file').click()">匯入自選</button>
+                </div>
+                <div class="library-grid" id="library-grid">
+                    <!-- 圖書館選項將動態生成 -->
+                </div>
+            </div>
+
+            <!-- 修改：搜尋歷史面板添加 ID -->
+            <div class="history-panel" id="history-section">
+                <div class="panel-title">
+                    📜 搜尋歷史
+                </div>
+                <div class="history-controls">
+                    <button class="control-btn" onclick="exportHistory()">匯出歷史</button>
+                    <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importHistory(event)">
+                    <button class="control-btn" onclick="document.getElementById('import-file').click()">匯入歷史</button>
+                    <button class="control-btn" onclick="clearSelectedHistory()">刪除選中</button>
+                    <button class="control-btn" onclick="clearAllHistory()">清空歷史</button>
+                </div>
+                <div class="history-list" id="history-list">
+                    <!-- 搜尋歷史將動態生成 -->
+                </div>
+            </div>
+        </div>
+
+        <div class="results-section" id="results-section" style="display: none;">
+            <div class="search-results">
+                <div class="result-panel">
+                    <div class="result-title">📖 搜尋結果</div>
+                    <div id="search-results"></div>
+                </div>
+                <div class="result-panel">
+                    <div class="result-title">📍 館藏狀態</div>
+                    <div id="library-results"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 圖書館資料
+        const libraries = [
+            ["https://tpml.ebook.hyread.com.tw", "台北市立圖書館", "major"],
+            ["https://tphcc.ebook.hyread.com.tw", "新北市立圖書館", "major"],
+            ["https://klccab.ebook.hyread.com.tw", "基隆市文化局", "local"],
+            ["https://ncl.ebook.hyread.com.tw", "國家圖書館", "major"],
+            ["https://ebook.nlpi.edu.tw/", "國立公共資訊圖書館", "major"],
+            ["https://ntledu.ebook.hyread.com.tw", "國立臺灣圖書館", "major"],
+            ["https://tycccgov.ebook.hyread.com.tw", "桃園市立圖書館", "major"],
+            ["https://hcmlgov.ebook.hyread.com.tw", "新竹市圖書館", "local"],
+            ["https://hchcc.ebook.hyread.com.tw", "新竹縣公共圖書館", "local"],
+            ["https://taichunggov.ebook.hyread.com.tw", "臺中市立圖書館", "major"],
+            ["https://bocach.ebook.hyread.com.tw", "彰化縣公共圖書館", "local"],
+            ["https://chcedu.ebook.hyread.com.tw", "彰化雲端電子書庫", "local"],
+            ["https://ilccb.ebook.hyread.com.tw", "宜蘭縣政府文化局", "local"],
+            ["https://hccc.ebook.hyread.com.tw", "花蓮縣文化局", "local"],
+            ["https://cabcygov.ebook.hyread.com.tw", "嘉義市政府文化局", "local"],
+            ["https://cycabgov.ebook.hyread.com.tw", "嘉義縣公共圖書館", "local"],
+            ["https://nthccgov.ebook.hyread.com.tw", "南投縣公共圖書館", "local"],
+            ["https://pthggov.ebook.hyread.com.tw", "屏東縣公共圖書館", "local"],
+            ["https://cclttct.ebook.hyread.com.tw", "臺東縣政府文化處", "local"],
+            ["https://phhcc.ebook.hyread.com.tw", "澎湖縣圖書館", "local"],
+            ["https://miaolilib.ebook.hyread.com.tw", "苗栗縣立圖書館", "local"],
+            ["https://mlcg.ebook.hyread.com.tw", "苗栗市立圖書館", "local"],
+            ["https://sanwan.ebook.hyread.com.tw", "苗栗縣三灣鄉立圖書館", "local"],
+            ["https://dahu.ebook.hyread.com.tw", "苗栗縣大湖鄉立圖書館", "local"],
+            ["https://gungguan.ebook.hyread.com.tw", "苗栗縣公館鄉立圖書館", "local"],
+            ["https://xihu.ebook.hyread.com.tw", "苗栗縣西湖鄉立圖書館", "local"],
+            ["https://nanchuang.ebook.hyread.com.tw", "苗栗縣南庄鄉立圖書館", "local"],
+            ["https://houlong.ebook.hyread.com.tw", "苗栗縣後龍鎮立圖書館", "local"],
+            ["https://yuanli.ebook.hyread.com.tw", "苗栗縣苑裡鎮立圖書館", "local"],
+            ["https://tungshiau.ebook.hyread.com.tw", "苗栗縣通霄鎮立圖書館", "local"],
+            ["https://zaociao.ebook.hyread.com.tw", "苗栗縣造橋鄉立圖書館", "local"],
+            ["https://stan.ebook.hyread.com.tw", "苗栗縣獅潭鄉圖書館", "local"],
+            ["https://toufenlib.ebook.hyread.com.tw", "苗栗縣頭份市立圖書館", "local"],
+            ["https://touwu.ebook.hyread.com.tw", "苗栗縣頭屋鄉立圖書館", "local"],
+            ["https://ncltrccs.ebook.hyread.com.tw", "國家圖書館臺灣漢學資源中心", "major"],
+            ["https://ylccb.ebook.hyread.com.tw", "雲林縣公共圖書館", "local"],
+            ["https://hsinrong.ebook.hyread.com.tw", "欣榮紀念圖書館", "local"],
+            ["https://jianlib.ebook.hyread.com.tw", "花蓮縣吉安鄉立圖書館", "local"],
+            ["https://hualienlib.ebook.hyread.com.tw", "花蓮縣花蓮市立圖書館", "local"],
+            ["https://shlinlib.ebook.hyread.com.tw", "秀林鄉立圖書館", "local"],
+            ["https://sinchenlib.ebook.hyread.com.tw", "新城鄉立圖書館", "local"],
+            ["https://tnml.ebook.hyread.com.tw", "臺南市立圖書館", "major"],
+            ["https://ksml.ebook.hyread.com.tw", "高雄市立圖書館", "major"],
+            ["https://kinmen.ebook.hyread.com.tw", "金門縣文化局", "local"],
+            ["https://lieyu.ebook.hyread.com.tw", "金門縣烈嶼鄉公所", "local"],
+            ["https://matsucc.ebook.hyread.com.tw", "連江縣公共圖書館", "local"]
+        ];
+
+
+        let selectedLibraries = [];
+        let isSearching = false;
+        let searchHistory = [];
+        let currentSearchMode = 'name'; // 新增：當前搜尋模式
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initLibraries();
+            loadSearchHistory();
+            loadSavedLibrarySelection();
+            displaySearchHistory();
+            updateSelectedLibraryCount(); // 新增：更新已選擇數量顯示
+        });
+
+        // 新增：功能導航
+        function navigateToSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+                
+                // 如果是結果區域且隱藏，則顯示
+                if (sectionId === 'results-section' && section.style.display === 'none') {
+                    section.style.display = 'block';
+                }
+            }
+        }
+
+        // 新增：搜尋模式切換
+        function switchSearchMode(mode) {
+            currentSearchMode = mode;
+            
+            const nameTab = document.getElementById('name-search-tab');
+            const idTab = document.getElementById('id-search-tab');
+            const namePanel = document.getElementById('name-search-panel');
+            const idPanel = document.getElementById('id-search-panel');
+            
+            if (mode === 'name') {
+                nameTab.classList.add('active');
+                idTab.classList.remove('active');
+                namePanel.style.display = 'block';
+                idPanel.style.display = 'none';
+            } else {
+                idTab.classList.add('active');
+                nameTab.classList.remove('active');
+                idPanel.style.display = 'block';
+                namePanel.style.display = 'none';
+            }
+        }
+
+        // 新增：更新已選擇圖書館數量顯示
+        function updateSelectedLibraryCount() {
+            const count = selectedLibraries.length;
+            document.getElementById('selected-library-count').textContent = `(已選擇 ${count} 個)`;
+        }
+
+        // 初始化圖書館列表
+        function initLibraries() {
+            const grid = document.getElementById('library-grid');
+            libraries.forEach((library, index) => {
+                const item = document.createElement('div');
+                item.className = 'library-item';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'library-checkbox';
+                checkbox.id = `lib-${index}`;
+                checkbox.value = library[0];
+                checkbox.addEventListener('change', updateSelectedLibraries);
+                
+                const label = document.createElement('label');
+                label.className = 'library-name';
+                label.htmlFor = `lib-${index}`;
+                label.textContent = library[1];
+                
+                item.appendChild(checkbox);
+                item.appendChild(label);
+                grid.appendChild(item);
+            });
+            
+            // 預設選擇主要館（如果沒有保存的選擇）
+            if (!loadSavedLibrarySelection()) {
+                selectMajor();
+            }
+        }
+
+        // 修改：更新選中的圖書館
+        function updateSelectedLibraries() {
+            selectedLibraries = [];
+            const checkboxes = document.querySelectorAll('.library-checkbox:checked');
+            checkboxes.forEach(checkbox => {
+                selectedLibraries.push(checkbox.value);
+            });
+            updateSelectedLibraryCount(); // 新增：更新數量顯示
+        }
+
+        // 全選
+        function selectAll() {
+            const checkboxes = document.querySelectorAll('.library-checkbox');
+            checkboxes.forEach(checkbox => checkbox.checked = true);
+            updateSelectedLibraries();
+        }
+
+        // 清除選擇
+        function selectNone() {
+            const checkboxes = document.querySelectorAll('.library-checkbox');
+            checkboxes.forEach(checkbox => checkbox.checked = false);
+            updateSelectedLibraries();
+        }
+
+        // 選擇主要館
+        function selectMajor() {
+            const checkboxes = document.querySelectorAll('.library-checkbox');
+            checkboxes.forEach((checkbox, index) => {
+                checkbox.checked = libraries[index][2] === 'major';
+            });
+            updateSelectedLibraries();
+        }
+
+        // 選擇地方館
+        function selectLocal() {
+            const checkboxes = document.querySelectorAll('.library-checkbox');
+            checkboxes.forEach((checkbox, index) => {
+                checkbox.checked = libraries[index][2] === 'local';
+            });
+            updateSelectedLibraries();
+        }
+
+        // 儲存自選圖書館
+        function saveSelectedLibraries() {
+            updateSelectedLibraries();
+            const savedSelection = {};
+            const checkboxes = document.querySelectorAll('.library-checkbox');
+            checkboxes.forEach((checkbox, index) => {
+                savedSelection[libraries[index][0]] = checkbox.checked;
+            });
+            
+            try {
+                const selections = JSON.parse(window.localStorage.getItem('librarySelections') || '{}');
+                const selectionName = prompt('請輸入自選組合名稱:', `自選${Object.keys(selections).length + 1}`);
+                if (selectionName) {
+                    selections[selectionName] = savedSelection;
+                    window.localStorage.setItem('librarySelections', JSON.stringify(selections));
+                    alert(`已儲存自選組合: ${selectionName}`);
+                }
+            } catch (e) {
+                // Fallback for browsers without localStorage
+                alert('無法儲存設定，瀏覽器不支援本地儲存功能');
+            }
+        }
+
+        // 載入自選圖書館
+        function loadSelectedLibraries() {
+            try {
+                const selections = JSON.parse(window.localStorage.getItem('librarySelections') || '{}');
+                const selectionNames = Object.keys(selections);
+                
+                if (selectionNames.length === 0) {
+                    alert('沒有已儲存的自選組合');
+                    return;
+                }
+                
+                const selectionName = prompt(`請選擇要載入的自選組合:\n${selectionNames.map((name, index) => `${index + 1}. ${name}`).join('\n')}\n\n請輸入組合名稱:`);
+                
+                if (selectionName && selections[selectionName]) {
+                    const savedSelection = selections[selectionName];
+                    const checkboxes = document.querySelectorAll('.library-checkbox');
+                    checkboxes.forEach((checkbox, index) => {
+                        const libraryUrl = libraries[index][0];
+                        checkbox.checked = savedSelection[libraryUrl] || false;
+                    });
+                    updateSelectedLibraries();
+                    alert(`已載入自選組合: ${selectionName}`);
+                } else if (selectionName) {
+                    alert('找不到指定的自選組合');
+                }
+            } catch (e) {
+                alert('無法載入設定');
+            }
+        }
+
+        // 新增：匯出自選圖書館
+        function exportLibrarySelection() {
+            try {
+                const selections = JSON.parse(window.localStorage.getItem('librarySelections') || '{}');
+                if (Object.keys(selections).length === 0) {
+                    alert('沒有已儲存的自選組合可以匯出');
+                    return;
+                }
+                
+                const dataStr = JSON.stringify(selections, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `圖書館自選組合_${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+                alert('自選組合匯出成功！');
+            } catch (e) {
+                alert('匯出失敗');
+            }
+        }
+
+        // 新增：匯入自選圖書館
+        function importLibrarySelection(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedSelections = JSON.parse(e.target.result);
+                    if (typeof importedSelections === 'object' && importedSelections !== null) {
+                        if (confirm(`要匯入 ${Object.keys(importedSelections).length} 個自選組合嗎？\n選擇「確定」會合併到現有組合，選擇「取消」會覆蓋現有組合。`)) {
+                            // 合併模式
+                            const existingSelections = JSON.parse(window.localStorage.getItem('librarySelections') || '{}');
+                            const mergedSelections = { ...existingSelections, ...importedSelections };
+                            window.localStorage.setItem('librarySelections', JSON.stringify(mergedSelections));
+                        } else {
+                            // 覆蓋模式
+                            window.localStorage.setItem('librarySelections', JSON.stringify(importedSelections));
+                        }
+                        alert('自選組合匯入成功！');
+                    } else {
+                        alert('匯入檔案格式錯誤');
+                    }
+                } catch (error) {
+                    alert('匯入檔案無法解析，請檢查檔案格式');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // 清空input以允許重複選擇同一檔案
+        }
+
+        // 載入保存的圖書館選擇
+        function loadSavedLibrarySelection() {
+            try {
+                const savedSelection = JSON.parse(window.localStorage.getItem('lastLibrarySelection') || 'null');
+                if (savedSelection) {
+                    const checkboxes = document.querySelectorAll('.library-checkbox');
+                    checkboxes.forEach((checkbox, index) => {
+                        const libraryUrl = libraries[index][0];
+                        checkbox.checked = savedSelection[libraryUrl] || false;
+                    });
+                    updateSelectedLibraries();
+                    return true;
+                }
+            } catch (e) {
+                // Fallback for browsers without localStorage
+            }
+            return false;
+        }
+
+        // 儲存當前圖書館選擇
+        function saveCurrentLibrarySelection() {
+            try {
+                const selection = {};
+                const checkboxes = document.querySelectorAll('.library-checkbox');
+                checkboxes.forEach((checkbox, index) => {
+                    selection[libraries[index][0]] = checkbox.checked;
+                });
+                window.localStorage.setItem('lastLibrarySelection', JSON.stringify(selection));
+            } catch (e) {
+                // Fallback for browsers without localStorage
+            }
+        }
+
+        // 載入搜尋歷史
+        function loadSearchHistory() {
+            try {
+                searchHistory = JSON.parse(window.localStorage.getItem('searchHistory') || '[]');
+            } catch (e) {
+                searchHistory = [];
+            }
+        }
+
+        // 儲存搜尋歷史
+        function saveSearchHistory() {
+            try {
+                window.localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+            } catch (e) {
+                // Fallback for browsers without localStorage
+            }
+        }
+
+        // 添加到搜尋歷史
+        function addToSearchHistory(bookTitle, bookId) {
+            const existingIndex = searchHistory.findIndex(item => item.id === bookId);
+            const historyItem = {
+                title: bookTitle,
+                id: bookId,
+                searchDate: new Date().toLocaleString('zh-TW')
+            };
+            
+            if (existingIndex >= 0) {
+                // 更新現有記錄的搜尋時間
+                searchHistory[existingIndex] = historyItem;
+            } else {
+                // 添加新記錄到開頭
+                searchHistory.unshift(historyItem);
+                // 限制歷史記錄數量（最多100條）
+                if (searchHistory.length > 100) {
+                    searchHistory = searchHistory.slice(0, 100);
+                }
+            }
+            
+            saveSearchHistory();
+            displaySearchHistory();
+        }
+
+        // 顯示搜尋歷史
+        function displaySearchHistory() {
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '';
+            
+            if (searchHistory.length === 0) {
+                historyList.innerHTML = '<div class="no-history">暫無搜尋歷史</div>';
+                return;
+            }
+            
+            searchHistory.forEach((item, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.innerHTML = `
+                    <input type="checkbox" class="history-checkbox" data-index="${index}">
+                    <div class="history-info">
+                        <div class="history-title">${item.title}</div>
+                        <div class="history-date">搜尋時間: ${item.searchDate}</div>
+                        <div class="history-id">ID: ${item.id}</div>
+                    </div>
+                    <button class="history-search-btn" onclick="searchFromHistory('${item.id}', '${item.title.replace(/'/g, "\\'")}')">
+                        再查詢
+                    </button>
+                `;
+                historyList.appendChild(historyItem);
+            });
+        }
+
+        // 從歷史記錄搜尋
+        function searchFromHistory(bookId, bookTitle) {
+            if (selectedLibraries.length === 0) {
+                alert('請至少選擇一個圖書館');
+                return;
+            }
+            
+            // 直接使用bookId進行館藏查詢
+            const bookHref = `bookDetail.jsp?id=${bookId}`;
+            findInLibraries(bookHref, bookTitle);
+            
+            // 滾動到結果區域
+            document.getElementById('results-section').style.display = 'block';
+            document.getElementById('library-results').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+        }
+
+        // 清除選中的歷史記錄
+        function clearSelectedHistory() {
+            const selectedCheckboxes = document.querySelectorAll('.history-checkbox:checked');
+            if (selectedCheckboxes.length === 0) {
+                alert('請先選擇要刪除的歷史記錄');
+                return;
+            }
+            
+            if (confirm(`確定要刪除 ${selectedCheckboxes.length} 條歷史記錄嗎？`)) {
+                const indicesToRemove = Array.from(selectedCheckboxes).map(cb => parseInt(cb.dataset.index)).sort((a, b) => b - a);
+                indicesToRemove.forEach(index => {
+                    searchHistory.splice(index, 1);
+                });
+                saveSearchHistory();
+                displaySearchHistory();
+            }
+        }
+
+        // 清空所有歷史記錄
+        function clearAllHistory() {
+            if (confirm('確定要清空所有搜尋歷史嗎？此操作無法復原。')) {
+                searchHistory = [];
+                saveSearchHistory();
+                displaySearchHistory();
+            }
+        }
+
+        // 匯出搜尋歷史
+        function exportHistory() {
+            if (searchHistory.length === 0) {
+                alert('沒有搜尋歷史可以匯出');
+                return;
+            }
+            
+            const dataStr = JSON.stringify(searchHistory, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `搜書歷史_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // 匯入搜尋歷史
+        function importHistory(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedHistory = JSON.parse(e.target.result);
+                    if (Array.isArray(importedHistory)) {
+                        if (confirm(`要匯入 ${importedHistory.length} 條歷史記錄嗎？\n選擇「確定」會合併到現有歷史，選擇「取消」會覆蓋現有歷史。`)) {
+                            // 合併模式：去重並合併
+                            importedHistory.forEach(item => {
+                                if (item.title && item.id) {
+                                    const existingIndex = searchHistory.findIndex(existing => existing.id === item.id);
+                                    if (existingIndex >= 0) {
+                                        searchHistory[existingIndex] = item;
+                                    } else {
+                                        searchHistory.push(item);
+                                    }
+                                }
+                            });
+                        } else {
+                            // 覆蓋模式
+                            searchHistory = importedHistory.filter(item => item.title && item.id);
+                        }
+                        saveSearchHistory();
+                        displaySearchHistory();
+                        alert('歷史記錄匯入成功！');
+                    } else {
+                        alert('匯入檔案格式錯誤');
+                    }
+                } catch (error) {
+                    alert('匯入檔案無法解析，請檢查檔案格式');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // 清空input以允許重複選擇同一檔案
+        }
+
+        // 修改：搜尋書籍 - 支援兩種模式
+        function searchBooks() {
+            if (selectedLibraries.length === 0) {
+                alert('請至少選擇一個圖書館');
+                return;
+            }
+
+            if (isSearching) return;
+            
+            // 儲存當前圖書館選擇
+            saveCurrentLibrarySelection();
+            
+            if (currentSearchMode === 'name') {
+                // 原有的書名搜尋邏輯
+                const bookName = document.getElementById('book-name').value.trim();
+                if (!bookName) {
+                    alert('請輸入書名');
+                    return;
+                }
+                
+                isSearching = true;
+                updateSearchUI(true);
+                
+                const bookNameUrl = `https://ebook.hyread.com.tw/searchList.jsp?search_field=FullText&search_input=${encodeURIComponent(bookName)}`;
+                
+                $.ajax({
+                    url: bookNameUrl,
+                    timeout: 15000,
+                    success: function(data) {
+                        const soup = $(data);
+                        const bookTitles = soup.find('div.book-title-01');
+                        displaySearchResults(bookTitles);
+                    },
+                    error: function(error) {
+                        document.getElementById('search-results').innerHTML = 
+                            '<div class="no-results">搜尋發生錯誤，請稍後再試</div>';
+                        updateSearchUI(false);
+                    }
+                });
+            } else {
+                // 新增：ID搜尋邏輯
+                const bookId = document.getElementById('book-id').value.trim();
+                const bookTitle = document.getElementById('book-title-for-id').value.trim() || `書籍ID:${bookId}`;
+                
+                if (!bookId) {
+                    alert('請輸入書籍ID');
+                    return;
+                }
+                
+                if (!/^\d+$/.test(bookId)) {
+                    alert('書籍ID必須是純數字');
+                    return;
+                }
+                
+                // 直接使用ID進行館藏查詢
+                const bookHref = `bookDetail.jsp?id=${bookId}`;
+                findInLibraries(bookHref, bookTitle);
+                
+                // 顯示結果區域並滾動到館藏狀態
+                document.getElementById('results-section').style.display = 'block';
+                document.getElementById('search-results').innerHTML = 
+                    `<div class="book-item">
+                        <div class="book-title">${bookTitle}</div>
+                        <div class="book-id">ID: ${bookId}</div>
+                    </div>`;
+                
+                setTimeout(() => {
+                    document.getElementById('library-results').scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                }, 500);
+            }
+        }
+
+        // 顯示搜尋結果
+        function displaySearchResults(bookTitles) {
+            const resultsDiv = document.getElementById('search-results');
+            resultsDiv.innerHTML = '';
+            
+            if (bookTitles.length === 0) {
+                resultsDiv.innerHTML = '<div class="no-results">找不到相關書籍</div>';
+                updateSearchUI(false);
+                return;
+            }
+
+            bookTitles.each(function(index) {
+                const bookUrl = $(this).find('a');
+                const bookTitle = bookUrl.text();
+                const bookHref = bookUrl.attr('href');
+                
+                const bookItem = document.createElement('div');
+                bookItem.className = 'book-item';
+                bookItem.innerHTML = `
+                    <div class="book-title">${bookTitle}</div>
+                    <button class="find-btn" onclick="findInLibraries('${bookHref}', '${bookTitle.replace(/'/g, "\\'")}')">
+                        查詢館藏
+                    </button>
+                `;
+                resultsDiv.appendChild(bookItem);
+            });
+            
+            document.getElementById('results-section').style.display = 'block';
+            updateSearchUI(false);
+        }
+
+        // 檢測瀏覽器類型
+        function isSafari() {
+            return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        }
+
+        // 在圖書館中查詢 - 針對 Safari 優化但保持原有邏輯
+        async function findInLibraries(bookHref, bookTitle) {
+            const resultsDiv = document.getElementById('library-results');
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>正在查詢各館館藏...</div>';
+            
+            const bookId = bookHref.match(/id=(\d+)/)[1];
+            
+            // 添加到搜尋歷史
+            addToSearchHistory(bookTitle, bookId);
+            
+            let searchedCount = 0;
+            let foundCount = 0;
+            
+            // 顯示進度
+            document.getElementById('search-stats').style.display = 'flex';
+            document.getElementById('progress-bar').style.display = 'block';
+            
+            const results = [];
+            const batchSize = isSafari() ? 3 : 5; // Safari 減少批次大小
+            
+            // 分批處理請求以避免被封鎖
+            for (let i = 0; i < selectedLibraries.length; i += batchSize) {
+                const batch = selectedLibraries.slice(i, i + batchSize);
+                const batchPromises = batch.map(async (url, batchIndex) => {
+                    try {
+                        // Safari 增加延遲時間
+                        const delay = isSafari() ? (200 + Math.random() * 300) : (100 + Math.random() * 200);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        
+                        const api = `${url}/bookDetail.jsp?id=${bookId}`;
+                        
+                        // 針對 Safari 使用 jQuery Ajax，其他瀏覽器保持原來的 fetch
+                        let text;
+                        if (isSafari()) {
+                            text = await new Promise((resolve, reject) => {
+                                $.ajax({
+                                    url: api,
+                                    method: 'GET',
+                                    timeout: 8000,
+                                    success: resolve,
+                                    error: reject
+                                });
+                            });
+                        } else {
+                            const response = await fetch(api, {
+                                headers: {
+                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                                },
+                                signal: AbortSignal.timeout(8000)
+                            });
+                            text = await response.text();
+                        }
+                        
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(text, 'text/html');
+                        
+                        searchedCount++;
+                        updateProgress(searchedCount, selectedLibraries.length);
+                        
+                        // 檢查是否有書 - 保持原有邏輯
+                        if (doc.querySelector('img[src="/Template/RWD3.0/images/nosale2_pic.png"]')) {
+                            return null;
+                        }
+                        
+                        const libraryName = getLibraryName(url);
+                        const bookHits = doc.querySelector('.date');
+                        const myStateButton = doc.querySelector('#myStateButton');
+                        const collection = doc.querySelector('#Collection') || doc.querySelector('#combineSite0');
+                        
+                        if (myStateButton) {
+                            foundCount++;
+                            document.getElementById('found-count').textContent = foundCount;
+                            
+                            return {
+                                libraryName,
+                                url: api,
+                                hits: bookHits ? bookHits.textContent : '',
+                                status: collection ? collection.textContent : myStateButton.textContent,
+                                type: myStateButton.textContent
+                            };
+                        }
+                        
+                        return null;
+                    } catch (error) {
+                        searchedCount++;
+                        updateProgress(searchedCount, selectedLibraries.length);
+                        console.error(`Error searching ${url}:`, error);
+                        return null;
+                    }
+                });
+                
+                const batchResults = await Promise.all(batchPromises);
+                results.push(...batchResults.filter(result => result !== null));
+                
+                // 即時顯示結果
+                displayLibraryResults(results);
+            }
+            
+            // 隱藏進度條並滾動到結果
+            setTimeout(() => {
+                document.getElementById('progress-bar').style.display = 'none';
+                document.getElementById('search-stats').style.display = 'none';
+                
+                // 滾動到館藏狀態區域
+                document.getElementById('library-results').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            }, 1000);
+        }
+
+        // 更新進度
+        function updateProgress(current, total) {
+            const percentage = (current / total) * 100;
+            document.getElementById('progress-fill').style.width = `${percentage}%`;
+            document.getElementById('searched-count').textContent = current;
+        }
+
+        // 顯示圖書館結果
+        function displayLibraryResults(results) {
+            const resultsDiv = document.getElementById('library-results');
+            
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<div class="no-results">所選圖書館均無此書籍</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '';
+            results.forEach(result => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'library-result';
+                resultItem.innerHTML = `
+                    <div class="library-name-result">${result.libraryName}</div>
+                    <div class="book-status">狀態: ${result.status}</div>
+                    ${result.hits ? `<div class="book-status">人氣: ${result.hits}</div>` : ''}
+                    <a href="${result.url}" target="_blank" class="book-link">查看詳情 →</a>
+                `;
+                resultsDiv.appendChild(resultItem);
+            });
+        }
+
+        // 獲取圖書館名稱
+        function getLibraryName(url) {
+            const library = libraries.find(lib => lib[0] === url);
+            return library ? library[1] : url;
+        }
+
+        // 更新搜尋UI狀態
+        function updateSearchUI(searching) {
+            const button = document.getElementById('search-button');
+            const buttonText = button.querySelector('.btn-text');
+            
+            if (searching) {
+                button.disabled = true;
+                buttonText.innerHTML = '<div class="spinner"></div>搜尋中...';
+            } else {
+                button.disabled = false;
+                buttonText.textContent = '開始搜尋';
+                isSearching = false;
+            }
+        }
+
+        // 事件監聽器
+        document.getElementById('search-button').addEventListener('click', searchBooks);
+        document.getElementById('book-name').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchBooks();
+            }
+        });
+    </script>
+</body>
+</html>
